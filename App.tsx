@@ -12,12 +12,13 @@ import HomeView from './components/HomeView';
 import HistoryView from './components/HistoryView';
 import CreateView from './components/CreateView';
 import PlanningView from './components/PlanningView';
+import PasswordResetView from './components/PasswordResetView';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<any>(null);
-  const [view, setView] = useState<'home' | 'create' | 'history' | 'planning' | 'global-planning' | 'login'>('login');
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [view, setView] = useState<'home' | 'create' | 'history' | 'planning' | 'global-planning' | 'login' | 'password-reset'>('login');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
@@ -112,15 +113,24 @@ const App: React.FC = () => {
 
     initApp();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
+
+      if (event === 'PASSWORD_RECOVERY') {
+        setView('password-reset');
+        return;
+      }
+
       if (session) {
-        fetchUserData(session.user.id);
+        await fetchUserData(session.user.id);
         setView('home');
       } else {
         setUser(null);
         setSavedItems([]);
-        setView('login');
+        // Si no estamos en medio de una recuperación, vamos a login
+        if (view !== 'password-reset') {
+          setView('login');
+        }
       }
     });
 
@@ -161,6 +171,39 @@ const App: React.FC = () => {
       setIsAuthLoading(false);
     }
   };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setIsAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(loginForm.email!, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      alert("Se ha enviado un enlace a tu correo.");
+      setAuthMode('signin');
+    } catch (err: any) {
+      setErrorMessage(err.message);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (password: string) => {
+    setErrorMessage(null);
+    setIsAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    } catch (err: any) {
+      setErrorMessage(err.message);
+      throw err;
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setErrorMessage(null);
     setIsAuthLoading(true);
@@ -390,6 +433,17 @@ const App: React.FC = () => {
         isAuthLoading={isAuthLoading}
         handleLoginSubmit={handleLoginSubmit}
         handleGoogleLogin={handleGoogleLogin}
+        handleResetSubmit={handleResetSubmit}
+        errorMessage={errorMessage}
+      />
+    );
+  }
+
+  if (view === 'password-reset') {
+    return (
+      <PasswordResetView
+        handleUpdatePassword={handleUpdatePassword}
+        isAuthLoading={isAuthLoading}
         errorMessage={errorMessage}
       />
     );
