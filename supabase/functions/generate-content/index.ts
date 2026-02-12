@@ -64,7 +64,11 @@ serve(async (req) => {
 
     } catch (error: any) {
         console.error("Function Error:", error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        // Devolvemos el mensaje de error específico para que el frontend lo muestre
+        return new Response(JSON.stringify({
+            error: error.message,
+            details: error.stack
+        }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
