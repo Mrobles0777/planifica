@@ -93,47 +93,32 @@ const App: React.FC = () => {
   }, [fetchSavedItems]);
 
   useEffect(() => {
-    const initApp = async () => {
-      setIsInitializing(true);
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        setSession(session);
-        if (session) {
-          await fetchUserData(session.user.id);
-          setView('home');
-        } else {
-          setView('login');
-        }
-      } catch (err: any) {
-        console.error("Initialization error:", err);
-        setView('login');
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    initApp();
-
+    // Escuchar cambios de autenticación (esto también maneja la sesión inicial)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
 
       if (event === 'PASSWORD_RECOVERY') {
         setView('password-reset');
+        setIsInitializing(false);
         return;
       }
 
       if (session) {
+        // Solo cargar datos si no los tenemos o si es un evento de login/cambio
         await fetchUserData(session.user.id);
-        setView('home');
+
+        // No forzar 'home' si ya estamos en una vista protegida válida (como profile)
+        setView(currentView => {
+          if (currentView === 'login' || currentView === 'password-reset') return 'home';
+          return currentView;
+        });
       } else {
         setUser(null);
         setSavedItems([]);
-        // Si no estamos en medio de una recuperación, vamos a login
-        if (view !== 'password-reset') {
-          setView('login');
-        }
+        setView('login');
       }
+
+      setIsInitializing(false);
     });
 
     return () => subscription.unsubscribe();
