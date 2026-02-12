@@ -31,7 +31,7 @@ export async function generateAssessmentDetails(
   objective: string,
   methodology: Methodology
 ): Promise<Omit<GeneratedAssessment, 'level' | 'nucleo' | 'objective' | 'methodology' | 'createdAt'>> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
   let methodologyPrompt = "";
   if (methodology === Methodology.WALDORF) {
@@ -106,7 +106,7 @@ export async function generateAssessmentDetails(
  * Genera la planificación técnica detallada.
  */
 export async function generateVariablePlanning(assessment: GeneratedAssessment): Promise<Planning> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
   const prompt = `
     Como experto en Educación Parvularia, crea una PLANIFICACIÓN VARIABLE detallada para Chile siguiendo las BCEP.
@@ -167,7 +167,7 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
  * Genera una planificación integrada global a partir de múltiples documentos técnicos.
  */
 export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planning> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
   // Extraemos la información completa de cada ítem fuente
   const details = sourceItems.map((item, index) => {
