@@ -1,16 +1,25 @@
 import React from 'react';
-import { Star, LogOut, BookOpen, History, User as UserIcon } from 'lucide-react';
+import { Star, LogOut, BookOpen, History, User as UserIcon, AlertCircle, X } from 'lucide-react';
 import { User } from '../types';
 
 interface LayoutProps {
   user: User | null;
   view: string;
-  setView: (view: any) => void;
   handleLogout: () => void;
+  errorMessage?: string | null;
+  setErrorMessage?: (msg: string | null) => void;
   children: React.ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ user, view, setView, handleLogout, children }) => {
+const Layout: React.FC<LayoutProps> = ({ user, view, setView, handleLogout, errorMessage, setErrorMessage, children }) => {
+  // Auto-hide error after 8 seconds
+  React.useEffect(() => {
+    if (errorMessage && setErrorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage, setErrorMessage]);
+
   return (
     <div className="min-h-screen bg-[#fffdf5] flex flex-col items-center">
       {/* Container shared across all views for consistency */}
@@ -41,6 +50,22 @@ const Layout: React.FC<LayoutProps> = ({ user, view, setView, handleLogout, chil
             </button>
           </div>
         </header>
+
+        {/* Global Error Message */}
+        {errorMessage && (
+          <div className="mx-6 mt-4 p-4 bg-rose-50 border-2 border-rose-100 rounded-2xl flex items-center justify-between gap-4 animate-in slide-in-from-top-2 z-50">
+            <div className="flex items-center gap-3 text-rose-600">
+              <AlertCircle className="w-5 h-5 shrink-0" />
+              <p className="text-xs font-bold leading-tight">{errorMessage}</p>
+            </div>
+            <button
+              onClick={() => setErrorMessage?.(null)}
+              className="p-1 hover:bg-rose-100 rounded-full transition-colors text-rose-300 hover:text-rose-500"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="flex-1 p-6 pb-28 md:p-10 md:pb-32 overflow-y-auto">

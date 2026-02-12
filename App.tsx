@@ -437,7 +437,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <Layout user={user} view={view} setView={setView} handleLogout={handleLogout}>
+    <Layout user={user} view={view} setView={setView} handleLogout={handleLogout} errorMessage={errorMessage} setErrorMessage={setErrorMessage}>
       {view === 'home' && (
         <HomeView
           user={user}

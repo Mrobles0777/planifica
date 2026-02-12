@@ -86,10 +86,11 @@ export async function generateAssessmentDetails(
     });
 
     if (error) throw error;
-    // La Edge Function devuelve { text: "..." }
+    if (!responseData) throw new Error("No se recibio respuesta de la funcion de IA.");
     const responseText = responseData.text;
+    if (!responseText) throw new Error("La IA devolvio una respuesta vacia.");
 
-    const data = parseJSONResponse(responseText || "{}");
+    const data = parseJSONResponse(responseText);
 
     return {
       activityName: data.activityName || "Nueva Experiencia",
@@ -161,6 +162,7 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
     });
 
     if (error) throw error;
+    if (!responseData?.text) throw new Error("No se recibio contenido para la planificacion.");
     return parseJSONResponse(responseData.text);
   } catch (error: any) {
     console.error("Gemini API Error (Variable Planning):", error);
