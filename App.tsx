@@ -317,16 +317,22 @@ const App: React.FC = () => {
       if (!result.success) {
         setErrorMessage(`⚠️ Error de Red: ${result.message}`);
       } else {
-        // Si la red base funciona, probamos la Edge Function específicamente
+        // Probamos la Edge Function específicamente con el nuevo modo diagnóstico
         try {
-          const { error } = await supabase.functions.invoke('generate-content', { body: { prompt: 'ping' } });
+          const { data, error } = await supabase.functions.invoke('generate-content', { body: { prompt: 'ping' } });
           if (error) {
-            setErrorMessage(`⚠️ La red funciona, pero la Edge Function responde: ${error.message}. Asegúrate de haber ejecutado 'supabase functions deploy generate-content'.`);
+            setErrorMessage(`⚠️ La función respondió error: ${error.message}. Asegúrate de haber ejecutado 'supabase functions deploy generate-content'.`);
+          } else if (data && data.status === "ok") {
+            if (data.hasApiKey) {
+              setErrorMessage(`✅ Conexión perfecta: Supabase activa y detecta API Key (Empieza por: ${data.apiKeyPrefix}).`);
+            } else {
+              setErrorMessage("⚠️ Conexión establecida pero FALTA LA API KEY. Ejecuta: npx supabase secrets set GEMINI_API_KEY=tu_clave");
+            }
           } else {
-            setErrorMessage("✅ Conexión perfecta: Supabase y Edge Function están activos.");
+            setErrorMessage("✅ Conexión establecida pero la respuesta no fue la esperada.");
           }
         } catch (e: any) {
-          setErrorMessage("⚠️ Error crítico: La red base funciona, pero falla el envío a la Edge Function. ¿Está el proyecto pausado?");
+          setErrorMessage("⚠️ Error crítico: La red base funciona, pero falla el envío a la Edge Function.");
         }
       }
     } catch (err: any) {

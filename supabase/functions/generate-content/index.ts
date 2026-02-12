@@ -16,17 +16,23 @@ serve(async (req) => {
         const { prompt, model = "gemini-1.5-flash", responseSchema, responseMimeType } = await req.json();
 
         const apiKey = Deno.env.get('GEMINI_API_KEY');
-        if (!apiKey) {
-            throw new Error('GEMINI_API_KEY no está configurada en las variables de entorno de Supabase.');
+
+        // Modo diagnóstico
+        if (prompt === "ping") {
+            return new Response(JSON.stringify({
+                status: "ok",
+                hasApiKey: !!apiKey,
+                apiKeyPrefix: apiKey ? apiKey.substring(0, 4) + "..." : "missing"
+            }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
         }
 
-        // Usamos la REST API directamente para evitar dependencias complejas en Deno
-        // Mapeamos "gemini-3-flash-preview" a un modelo válido si es necesario, 
-        // pero intentaremos usar el que nos pasen o "gemini-2.0-flash" por defecto.
-        // Nota: "gemini-3-flash-preview" podría no existir realmente, usaremos "gemini-2.0-flash" como fallback seguro si falla,
-        // o confiamos en el input.
+        if (!apiKey) {
+            throw new Error('GEMINI_API_KEY no está configurada en los secretos de Supabase.');
+        }
 
-        // Construimos el body para la API REST de Google
+        // ... resto de la lógica ...
         const body: any = {
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
@@ -40,8 +46,6 @@ serve(async (req) => {
 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-        console.log(`Llamando a Gemini API: ${model}`);
-
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -52,10 +56,9 @@ serve(async (req) => {
 
         if (!response.ok) {
             console.error("Gemini API Error:", data);
-            throw new Error(data.error?.message || 'Error desconocido en Gemini API');
+            throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
         }
 
-        // Extraemos el texto de la respuesta para mantener compatibilidad con el frontend
         const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
         return new Response(JSON.stringify({ text: generatedText }), {
@@ -64,10 +67,9 @@ serve(async (req) => {
 
     } catch (error: any) {
         console.error("Function Error:", error);
-        // Devolvemos el mensaje de error específico para que el frontend lo muestre
         return new Response(JSON.stringify({
             error: error.message,
-            details: error.stack
+            stack: error.stack
         }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
