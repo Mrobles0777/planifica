@@ -85,7 +85,10 @@ export async function generateAssessmentDetails(
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase Invoke Error:", error);
+      throw new Error(error.message || "Error al invocar la función de IA.");
+    }
     if (!responseData) throw new Error("No se recibio respuesta de la funcion de IA.");
     const responseText = responseData.text;
     if (!responseText) throw new Error("La IA devolvio una respuesta vacia.");
