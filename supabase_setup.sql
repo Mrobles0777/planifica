@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT,
   location TEXT,
   phone TEXT,
+  avatar_url TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -77,5 +78,22 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 7. Configuración de Storage (Ejecutar si es necesario)
+-- Nota: La creación de buckets suele hacerse desde la consola de Supabase, 
+-- pero aquí se definen las políticas de seguridad para un bucket llamado 'avatars'.
+
+-- Insertar bucket si no existe (opcional, requiere permisos de superusuario en algunos entornos)
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true) ON CONFLICT (id) DO NOTHING;
+
+-- Políticas de Storage para 'avatars'
+-- Permitir que cualquiera vea las fotos de perfil (si es público)
+-- CREATE POLICY "Cualquiera puede ver avatares" ON storage.objects FOR SELECT USING (bucket_id = 'avatars');
+
+-- Permitir que usuarios autenticados suban sus propias fotos
+-- CREATE POLICY "Usuarios suben sus propios avatares" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Permitir que usuarios actualicen sus fotos
+-- CREATE POLICY "Usuarios actualizan sus propios avatares" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
 
 -- NOTA: Ejecuta este script completo en el editor SQL de Supabase para aplicar los cambios.

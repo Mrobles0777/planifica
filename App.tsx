@@ -13,11 +13,12 @@ import HistoryView from './components/HistoryView';
 import CreateView from './components/CreateView';
 import PlanningView from './components/PlanningView';
 import PasswordResetView from './components/PasswordResetView';
+import ProfileView from './components/ProfileView';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<any>(null);
-  const [view, setView] = useState<'home' | 'create' | 'history' | 'planning' | 'global-planning' | 'login' | 'password-reset'>('login');
+  const [view, setView] = useState<'home' | 'create' | 'history' | 'planning' | 'global-planning' | 'login' | 'password-reset' | 'profile'>('login');
   const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -78,7 +79,8 @@ const App: React.FC = () => {
           lastName: data.last_name,
           email: data.email || '',
           location: data.location,
-          phone: data.phone
+          phone: data.phone,
+          avatarUrl: data.avatar_url
         });
       } else {
         setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
@@ -507,6 +509,15 @@ const App: React.FC = () => {
           isGeneratingPlanning={isGeneratingPlanning}
           setView={setView}
           openMaterialSearch={openMaterialSearch}
+        />
+      )}
+
+      {view === 'profile' && (
+        <ProfileView
+          user={user}
+          session={session}
+          setView={setView}
+          onUpdateUser={(updated) => setUser(updated)}
         />
       )}
 

@@ -1,6 +1,7 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { Level, GeneratedAssessment, Methodology, GroundingSource, Planning } from "../types";
+import { supabase } from "../supabaseClient";
 
 /**
  * Utility to clean and parse JSON from AI response.
@@ -31,7 +32,7 @@ export async function generateAssessmentDetails(
   objective: string,
   methodology: Methodology
 ): Promise<Omit<GeneratedAssessment, 'level' | 'nucleo' | 'objective' | 'methodology' | 'createdAt'>> {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  // const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY }); // REMOVED: Secure call via Edge Function
 
   let methodologyPrompt = "";
   if (methodology === Methodology.WALDORF) {
@@ -66,10 +67,10 @@ export async function generateAssessmentDetails(
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
+    const { data: responseData, error } = await supabase.functions.invoke('generate-content', {
+      body: {
+        model: "gemini-2.0-flash", // Usamos el modelo estándar soportado
+        prompt: prompt,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -84,7 +85,11 @@ export async function generateAssessmentDetails(
       }
     });
 
-    const data = parseJSONResponse(response.text || "{}");
+    if (error) throw error;
+    // La Edge Function devuelve { text: "..." }
+    const responseText = responseData.text;
+
+    const data = parseJSONResponse(responseText || "{}");
 
     return {
       activityName: data.activityName || "Nueva Experiencia",
@@ -106,7 +111,7 @@ export async function generateAssessmentDetails(
  * Genera la planificación técnica detallada.
  */
 export async function generateVariablePlanning(assessment: GeneratedAssessment): Promise<Planning> {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  // const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
   const prompt = `
     Como experto en Educación Parvularia, crea una PLANIFICACIÓN VARIABLE detallada para Chile siguiendo las BCEP.
@@ -122,10 +127,10 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
+    const { data: responseData, error } = await supabase.functions.invoke('generate-content', {
+      body: {
+        model: "gemini-2.0-flash",
+        prompt: prompt,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -155,7 +160,8 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
       }
     });
 
-    return parseJSONResponse(response.text);
+    if (error) throw error;
+    return parseJSONResponse(responseData.text);
   } catch (error: any) {
     console.error("Gemini API Error (Variable Planning):", error);
     if (error.message?.includes('fetch')) throw new Error("Error de red en planificación.");
@@ -167,7 +173,7 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
  * Genera una planificación integrada global a partir de múltiples documentos técnicos.
  */
 export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planning> {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  // const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
   // Extraemos la información completa de cada ítem fuente
   const details = sourceItems.map((item, index) => {
@@ -222,10 +228,10 @@ export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planni
   console.log("Generando Plan Integral para", sourceItems.length, "ítems...");
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
+    const { data: responseData, error } = await supabase.functions.invoke('generate-content', {
+      body: {
+        model: "gemini-2.0-flash",
+        prompt: prompt,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -255,7 +261,9 @@ export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planni
       }
     });
 
-    const result = parseJSONResponse(response.text);
+    if (error) throw error;
+
+    const result = parseJSONResponse(responseData.text);
     console.log("Plan Integral generado exitosamente.");
     return result;
   } catch (error: any) {

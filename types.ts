@@ -17,6 +17,7 @@ export interface User {
   email?: string;
   location: string;
   phone: string;
+  avatarUrl?: string;
   password?: string;
   isGoogleUser?: boolean;
 }
