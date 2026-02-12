@@ -161,6 +161,22 @@ const App: React.FC = () => {
       setIsAuthLoading(false);
     }
   };
+  const handleGoogleLogin = async () => {
+    setErrorMessage(null);
+    setIsAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setErrorMessage(err.message);
+      setIsAuthLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     if (window.confirm("¿Deseas cerrar sesión?")) {
@@ -373,6 +389,7 @@ const App: React.FC = () => {
         setShowPassword={setShowPassword}
         isAuthLoading={isAuthLoading}
         handleLoginSubmit={handleLoginSubmit}
+        handleGoogleLogin={handleGoogleLogin}
         errorMessage={errorMessage}
       />
     );
