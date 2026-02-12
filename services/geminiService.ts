@@ -1,4 +1,3 @@
-
 import { Type } from "@google/genai";
 import { Level, GeneratedAssessment, Methodology, GroundingSource, Planning } from "../types";
 import { supabase } from "../supabaseClient";
@@ -21,6 +20,24 @@ function parseJSONResponse(text: string) {
     }
     throw new Error("La respuesta del modelo no tiene un formato JSON válido.");
   }
+}
+
+/**
+ * Helper para manejar errores de Supabase Functions uniformemente.
+ */
+async function handleAIError(error: any) {
+  console.error("AI Service Error:", error);
+
+  if (error.context && typeof error.context.json === 'function') {
+    try {
+      const body = await error.context.json();
+      if (body.error) return new Error(body.error);
+    } catch (e) {
+      // Ignore parsing error
+    }
+  }
+
+  return new Error(error.message || "Error al conectar con el servicio de IA.");
 }
 
 /**
@@ -85,10 +102,7 @@ export async function generateAssessmentDetails(
       }
     });
 
-    if (error) {
-      console.error("Supabase Invoke Error:", error);
-      throw new Error(error.message || "Error al invocar la función de IA.");
-    }
+    if (error) throw await handleAIError(error);
     if (!responseData) throw new Error("No se recibio respuesta de la funcion de IA.");
     const responseText = responseData.text;
     if (!responseText) throw new Error("La IA devolvio una respuesta vacia.");
@@ -164,7 +178,7 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
       }
     });
 
-    if (error) throw error;
+    if (error) throw await handleAIError(error);
     if (!responseData?.text) throw new Error("No se recibio contenido para la planificacion.");
     return parseJSONResponse(responseData.text);
   } catch (error: any) {
