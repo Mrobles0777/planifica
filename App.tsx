@@ -259,11 +259,35 @@ const App: React.FC = () => {
   };
 
   const handleGenerate = async () => {
-    if (!selectedLevel || !selectedNucleo || !selectedObjective || !selectedMethodology) return;
-    setIsGenerating(true);
     setErrorMessage(null);
+
+    // Diagnóstico
+    if (!selectedLevel || !selectedNucleo || !selectedObjective || !selectedMethodology) {
+      const missing = [];
+      if (!selectedLevel) missing.push("Nivel");
+      if (!selectedNucleo) missing.push("Núcleo");
+      if (!selectedObjective) missing.push("Objetivo");
+      if (!selectedMethodology) missing.push("Metodología");
+
+      const msg = `Faltan seleccionar: ${missing.join(", ")}`;
+      console.warn(msg);
+      setErrorMessage(msg);
+      return;
+    }
+
+    setIsGenerating(true);
     try {
+      console.log("Iniciando generación con:", {
+        level: selectedLevel,
+        nucleo: selectedNucleo.name,
+        objective: selectedObjective.text,
+        methodology: selectedMethodology
+      });
+
       const data = await generateAssessmentDetails(selectedLevel, selectedNucleo.name, selectedObjective.text, selectedMethodology);
+
+      if (!data) throw new Error("La IA no devolvió datos válidos.");
+
       setCurrentAssessment({
         ...data,
         level: selectedLevel,
@@ -273,17 +297,53 @@ const App: React.FC = () => {
         createdAt: new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-CL')
       });
     } catch (err: any) {
-      setErrorMessage(err.message);
+      console.error("Error en handleGenerate:", err);
+      // Mejoramos el mensaje para errores common de Edge Functions
+      if (err.message?.includes('Failed to send a request')) {
+        setErrorMessage("¡Error de conexión! No se pudo contactar con la función de IA. ¿Has desplegado la Edge Function en Supabase?");
+      } else {
+        setErrorMessage(err.message || "Error al generar la aventura.");
+      }
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleDiagnose = async () => {
+    setIsDiagnosing(true);
+    setErrorMessage(null);
+    try {
+      const result = await testSupabaseConnection();
+      if (!result.success) {
+        setErrorMessage(`⚠️ Error de Red: ${result.message}`);
+      } else {
+        // Si la red base funciona, probamos la Edge Function específicamente
+        try {
+          const { error } = await supabase.functions.invoke('generate-content', { body: { prompt: 'ping' } });
+          if (error) {
+            setErrorMessage(`⚠️ La red funciona, pero la Edge Function responde: ${error.message}. Asegúrate de haber ejecutado 'supabase functions deploy generate-content'.`);
+          } else {
+            setErrorMessage("✅ Conexión perfecta: Supabase y Edge Function están activos.");
+          }
+        } catch (e: any) {
+          setErrorMessage("⚠️ Error crítico: La red base funciona, pero falla el envío a la Edge Function. ¿Está el proyecto pausado?");
+        }
+      }
+    } catch (err: any) {
+      setErrorMessage("Error durante el diagnóstico.");
+    } finally {
+      setIsDiagnosing(false);
     }
   };
 
   const handleGeneratePlanning = async (assessment: GeneratedAssessment) => {
     setIsGeneratingPlanning(true);
     setFocusedAssessment(assessment);
+    setErrorMessage(null);
     try {
       const planningData = await generateVariablePlanning(assessment);
+      if (!planningData) throw new Error("No se pudo obtener el contenido desarrollado de la planificación.");
+
       setCurrentPlanning({
         ...planningData,
         mes: assessment.createdAt,
@@ -291,7 +351,12 @@ const App: React.FC = () => {
       });
       setView('planning');
     } catch (err: any) {
-      setErrorMessage("Error al generar planificación.");
+      console.error("Error en handleGeneratePlanning:", err);
+      if (err.message?.includes('Failed to send a request')) {
+        setErrorMessage("¡Error de red! No se pudo enviar el contenido a la IA. Revisa tu conexión.");
+      } else {
+        setErrorMessage(err.message || "Error al desarrollar la planificación.");
+      }
     } finally {
       setIsGeneratingPlanning(false);
     }
@@ -503,6 +568,8 @@ const App: React.FC = () => {
           session={session}
           setView={setView}
           onUpdateUser={(updated) => setUser(updated)}
+          isDiagnosing={isDiagnosing}
+          handleDiagnose={handleDiagnose}
         />
       )}
 

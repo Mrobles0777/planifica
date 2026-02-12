@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Save, ArrowLeft, Loader2, X, User as UserIcon } from 'lucide-react';
+import { Camera, Upload, Save, ArrowLeft, Loader2, X, User as UserIcon, Star } from 'lucide-react';
 import { User } from '../types';
 import { supabase } from '../supabaseClient';
 
@@ -8,9 +8,11 @@ interface ProfileViewProps {
     session: any;
     setView: (view: any) => void;
     onUpdateUser: (updatedUser: User) => void;
+    isDiagnosing?: boolean;
+    handleDiagnose?: () => void;
 }
 
-const ProfileView: React.FC<ProfileViewProps> = ({ user, session, setView, onUpdateUser }) => {
+const ProfileView: React.FC<ProfileViewProps> = ({ user, session, setView, onUpdateUser, isDiagnosing, handleDiagnose }) => {
     const [formData, setFormData] = useState({
         firstName: user?.firstName || '',
         lastName: user?.lastName || '',
@@ -228,6 +230,21 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, session, setView, onUpd
                     {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
                     Guardar Cambios
                 </button>
+
+                {/* Diagnostic Section */}
+                <div className="pt-4 border-t border-slate-100">
+                    <button
+                        onClick={handleDiagnose}
+                        disabled={isDiagnosing}
+                        className="w-full py-4 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border-2 border-dashed border-slate-200"
+                    >
+                        {isDiagnosing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+                        Diagnosticar Conexión (IA / Base de Datos)
+                    </button>
+                    <p className="text-[10px] text-slate-400 text-center mt-3 font-medium">
+                        Usa esto si los botones de "Crear Aventura" o "Planificación" no responden.
+                    </p>
+                </div>
             </div>
 
             {/* Camera Modal */}
