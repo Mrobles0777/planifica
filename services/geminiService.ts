@@ -49,7 +49,7 @@ export async function generateAssessmentDetails(
   objective: string,
   methodology: Methodology
 ): Promise<Omit<GeneratedAssessment, 'level' | 'nucleo' | 'objective' | 'methodology' | 'createdAt'>> {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY }); // REMOVED: Secure call via Edge Function
+  // const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY }); // REMOVED: Secure call via Edge Function
 
   let methodologyPrompt = "";
   if (methodology === Methodology.WALDORF) {
