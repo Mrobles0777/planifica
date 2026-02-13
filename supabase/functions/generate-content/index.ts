@@ -11,48 +11,43 @@ serve(async (req) => {
         });
     }
     try {
-        const { prompt, model = "gemini-2.0-flash", responseSchema, responseMimeType } = await req.json();
+        const { prompt, model = "gemini-1.5-flash", responseSchema, responseMimeType } = await req.json();
         const apiKey = Deno.env.get('GEMINI_API_KEY');
+
         // Modo diagnóstico
         if (prompt === "ping") {
             return new Response(JSON.stringify({
                 status: "ok",
                 hasApiKey: !!apiKey,
-                apiKeyPrefix: apiKey ? apiKey.substring(0, 4) + "..." : "missing"
+                apiKeyPrefix: apiKey ? apiKey.substring(0, 4) + "..." : "missing",
+                info: "Usando Gemini 1.5 Flash en v1 API"
             }), {
-                headers: {
-                    ...corsHeaders,
-                    'Content-Type': 'application/json'
-                }
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
+
         if (!apiKey) {
             throw new Error('GEMINI_API_KEY no está configurada en los secretos de Supabase.');
         }
-        // ... resto de la lógica ...
+
         const body = {
-            contents: [
-                {
-                    parts: [
-                        {
-                            text: prompt
-                        }
-                    ]
-                }
-            ],
+            contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
                 responseMimeType: responseMimeType || "application/json"
             }
         };
+
         if (responseSchema) {
             body.generationConfig.responseSchema = responseSchema;
         }
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        // Usamos v1 para gemini-1.5-flash (más estable) y v1beta para otros si es necesario
+        const apiVersion = model.includes("2.0") ? "v1beta" : "v1";
+        const apiUrl = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${apiKey}`;
+
         const response = await fetch(apiUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
         const data = await response.json();
