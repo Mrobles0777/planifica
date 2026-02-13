@@ -1,4 +1,3 @@
-
 # 🔐 Instrucciones para Desplegar la Seguridad (Edge Functions)
 
 Para completar la corrección de seguridad y ocultar tu API Key de Gemini, debes desplegar la "Edge Function" que he creado. Esto moverá la lógica de IA del navegador (inseguro) a los servidores de Supabase (seguro).
@@ -16,6 +15,7 @@ npm install -g supabase
 ```bash
 npx supabase login
 ```
+
 Sigue las instrucciones en pantalla para autorizar el CLI.
 
 ## PASO 3: Vincular tu Proyecto
@@ -25,6 +25,7 @@ Necesitas el "Project ID" de tu proyecto en Supabase (lo puedes ver en la URL de
 ```bash
 npx supabase link --project-ref gbdtngkdtdnsmhkczdru
 ```
+
 Te pedirá la contraseña de tu base de datos. Si no la recuerdas, puedes resetearla en el panel de Supabase (Database > Settings).
 
 ## PASO 4: Establecer el Secreto (API Key)
@@ -48,6 +49,7 @@ npx supabase functions deploy generate-content
 ## ✅ Verificación
 
 Una vez desplegado:
+
 1. Recarga tu aplicación Planifica.
 2. Intenta generar una planificación.
 3. Ahora la petición no irá a Google directamente, sino a `https://gbdtngkdtdnsmhkczdru.supabase.co/functions/v1/generate-content`, y tu API Key nunca será visible para el usuario.
