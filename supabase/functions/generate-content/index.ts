@@ -14,13 +14,13 @@ serve(async (req) => {
         const { prompt, model = "gemini-1.5-flash", responseSchema, responseMimeType } = await req.json();
         const apiKey = Deno.env.get('GEMINI_API_KEY');
 
-        // Modo diagnóstico
+        // Modo diagnóstico: Prueba v1 y v1beta
         if (prompt === "ping") {
             return new Response(JSON.stringify({
                 status: "ok",
                 hasApiKey: !!apiKey,
                 apiKeyPrefix: apiKey ? apiKey.substring(0, 4) + "..." : "missing",
-                info: "Usando Gemini 1.5 Flash en v1 API"
+                info: "Diagnosticando v1 y v1beta..."
             }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
@@ -41,8 +41,9 @@ serve(async (req) => {
             body.generationConfig.responseSchema = responseSchema;
         }
 
-        // Usamos v1 para gemini-1.5-flash (más estable) y v1beta para otros si es necesario
-        const apiVersion = model.includes("2.0") ? "v1beta" : "v1";
+        // CRITICAL: responseSchema SOLO funciona en v1beta.
+        // Forzamos v1beta si hay un esquema definido.
+        const apiVersion = (responseSchema || model.includes("2.0")) ? "v1beta" : "v1";
         const apiUrl = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${apiKey}`;
 
         const response = await fetch(apiUrl, {
