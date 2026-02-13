@@ -11,7 +11,7 @@ serve(async (req) => {
         });
     }
     try {
-        const { prompt, model = "gemini-1.5-flash", responseSchema, responseMimeType } = await req.json();
+        const { prompt, model = "gemini-3-flash-preview", responseSchema, responseMimeType } = await req.json();
         const apiKey = Deno.env.get('GEMINI_API_KEY');
 
         // Modo diagnóstico
@@ -20,7 +20,7 @@ serve(async (req) => {
                 status: "ok",
                 hasApiKey: !!apiKey,
                 apiKeyPrefix: apiKey ? apiKey.substring(0, 4) + "..." : "missing",
-                info: "Probando v1beta con Gemini 3 Pro..."
+                info: "Probando v1beta con Gemini 3 Flash..."
             }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
