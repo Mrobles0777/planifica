@@ -12,6 +12,9 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ user, view, setView, handleLogout, errorMessage, setErrorMessage, children }) => {
+  // Logout Modal State
+  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
+
   // Auto-hide error after 8 seconds
   React.useEffect(() => {
     if (errorMessage && setErrorMessage) {
@@ -53,7 +56,7 @@ const Layout: React.FC<LayoutProps> = ({ user, view, setView, handleLogout, erro
               )}
             </div>
             <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 border border-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all active:scale-90 shadow-sm"
               title="Cerrar Sesión"
             >
@@ -113,6 +116,40 @@ const Layout: React.FC<LayoutProps> = ({ user, view, setView, handleLogout, erro
             <span className="text-[10px] font-black uppercase tracking-widest">Perfil</span>
           </button>
         </nav>
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl border-2 border-slate-50 scale-in-center animate-in zoom-in-95 duration-200">
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center">
+                  <LogOut className="w-10 h-10 text-rose-500" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-slate-800 tracking-tight">¿Cerrar Sesión?</h3>
+                  <p className="text-slate-500 font-bold text-sm">¿Estás segura que deseas salir de Planifica?</p>
+                </div>
+                <div className="flex flex-col w-full gap-3 pt-4">
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setShowLogoutModal(false);
+                    }}
+                    className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black text-lg transition-all active:scale-[0.98] shadow-lg shadow-rose-100"
+                  >
+                    Sí, cerrar sesión
+                  </button>
+                  <button
+                    onClick={() => setShowLogoutModal(false)}
+                    className="w-full py-4 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm transition-all"
+                  >
+                    No, quiero quedarme
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

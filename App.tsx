@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Loader2, Star, Target, Calendar } from 'lucide-react';
+import { Loader2, Star, Target, Calendar, User as UserIcon } from 'lucide-react';
 import { Level, GeneratedAssessment, Nucleo, Objective, Methodology, Planning, User } from './types';
 import { CURRICULUM_DATA } from './constants';
 import { generateAssessmentDetails, generateVariablePlanning, generateGlobalPlanning } from './services/geminiService';
@@ -209,12 +209,10 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    if (window.confirm("¿Deseas cerrar sesión?")) {
-      try {
-        await supabase.auth.signOut();
-      } catch (err) {
-        console.error("Logout error:", err);
-      }
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Logout error:", err);
     }
   };
 
@@ -602,40 +600,96 @@ const App: React.FC = () => {
       {/* DOCUMENTO TÉCNICO OCULTO PARA EXPORTACIÓN PDF */}
       <div style={{ position: 'fixed', left: '-10000px', top: '0', width: '210mm', minHeight: '297mm', background: 'white' }} className="no-print">
         {activePlanning && (
-          <div id="professional-planning-export-target" className="bg-white">
-            <div className="flex items-center justify-between w-full border-b-8 border-sky-400 pb-10 mb-10">
+          <div id="professional-planning-export-target" className="bg-white p-10">
+            {/* Header Rediseñado */}
+            <div className="flex items-start justify-between w-full mb-2">
               <div className="flex items-center gap-6">
-                <div className="p-5 bg-sky-500 rounded-3xl">
-                  <Star className="text-white w-10 h-10 fill-white" />
+                <div className="w-20 h-20 bg-gradient-to-br from-sky-500 to-sky-600 rounded-[1.5rem] flex items-center justify-center shadow-lg">
+                  <Star className="text-white w-12 h-12 fill-white" />
                 </div>
                 <div>
-                  <h1 className="text-5xl font-black text-slate-900 italic">Planifica</h1>
-                  <p className="text-[12px] font-black text-sky-400 uppercase tracking-[0.5em] mt-3">Documento Profesional</p>
+                  <h1 className="text-5xl font-black text-slate-800 tracking-tighter italic">Planifica</h1>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-[11px] font-black text-slate-300 uppercase mb-1">Emitido el</p>
-                  <p className="text-sm font-black text-slate-800 bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100">
-                    {activePlanning.mes || new Date().toLocaleDateString('es-CL')}
-                  </p>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">EMITIDO EL</p>
+                <div className="bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100 font-bold text-sm text-slate-700">
+                  {activePlanning.mes || new Date().toLocaleDateString('es-CL')}
                 </div>
-                {user?.avatarUrl && (
-                  <div className="w-20 h-20 rounded-3xl border-4 border-slate-50 overflow-hidden shadow-sm bg-slate-50 flex items-center justify-center shrink-0">
-                    <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                  </div>
-                )}
               </div>
             </div>
 
+            <div className="mb-6">
+              <p className="text-[11px] font-black text-sky-500 uppercase tracking-[0.4em] pl-2">
+                REGISTRO DE AVENTURA PEDAGÓGICA
+              </p>
+            </div>
+
+            {/* Blue Divider Bar */}
+            <div className="h-2.5 bg-sky-400 w-full rounded-full mb-10 shadow-sm shadow-sky-100"></div>
+
+            {/* 2x2 Info Grid */}
             <div className="grid grid-cols-2 gap-4 mb-12">
-              <div className="bg-sky-50/50 p-6 rounded-[2rem] border-2 border-sky-100">
-                <div className="flex items-center gap-2 text-[11px] font-black text-sky-500 uppercase mb-2"><Target className="w-4 h-4" /> Nivel</div>
-                <div className="text-md font-black text-slate-900">{activePlanning.nivel}</div>
+              {/* Nivel Card */}
+              <div className="bg-sky-50/40 p-6 rounded-[2.5rem] border-2 border-sky-100 flex gap-4 items-center">
+                <div className="p-3 bg-white rounded-2xl shadow-sm border border-sky-50">
+                  <Target className="w-6 h-6 text-sky-500" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-sky-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    EL NIVEL
+                  </div>
+                  <div className="text-sm font-black text-slate-800 leading-tight">{activePlanning.nivel}</div>
+                </div>
               </div>
-              <div className="bg-amber-50/50 p-6 rounded-[2rem] border-2 border-amber-100">
-                <div className="flex items-center gap-2 text-[11px] font-black text-amber-500 uppercase mb-2"><Star className="w-4 h-4" /> Equipo</div>
-                <div className="text-md font-black text-slate-900">{activePlanning.equipo || 'Docente'}</div>
+
+              {/* Fecha Card */}
+              <div className="bg-amber-50/40 p-6 rounded-[2.5rem] border-2 border-amber-100 flex gap-4 items-center">
+                <div className="p-3 bg-white rounded-2xl shadow-sm border border-amber-50">
+                  <Calendar className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    DÍA DEL ENCUENTRO
+                  </div>
+                  <div className="text-sm font-black text-slate-800 leading-tight">{activePlanning.mes || new Date().toLocaleDateString('es-CL')}</div>
+                </div>
+              </div>
+
+              {/* Guía Card (With Avatar) */}
+              <div className="bg-emerald-50/40 p-4 rounded-[2.5rem] border-2 border-emerald-100 flex gap-4 items-center">
+                <div className="shrink-0">
+                  {user?.avatarUrl ? (
+                    <div className="w-14 h-14 rounded-2xl border-2 border-emerald-200 overflow-hidden shadow-sm bg-white">
+                      <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-white rounded-2xl shadow-sm border border-emerald-50">
+                      <UserIcon className="w-6 h-6 text-emerald-500" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
+                    GUÍA DE AVENTURA
+                  </div>
+                  <div className="text-sm font-black text-slate-800 leading-tight">{activePlanning.equipo || 'Docente'}</div>
+                </div>
+              </div>
+
+              {/* Ámbito Card */}
+              <div className="bg-rose-50/40 p-6 rounded-[2.5rem] border-2 border-rose-100 flex gap-4 items-center">
+                <div className="p-3 bg-white rounded-2xl shadow-sm border border-rose-50">
+                  <Star className="w-6 h-6 text-rose-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">
+                    EL ÁMBITO
+                  </div>
+                  <div className="text-[11px] font-black text-slate-800 leading-tight truncate">
+                    {activePlanning.ambitoNucleo || 'Desarrollo Personal'}
+                  </div>
+                </div>
               </div>
             </div>
 
