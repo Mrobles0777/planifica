@@ -92,7 +92,7 @@ export async function generateAssessmentDetails(
   try {
     const { data: responseData, error } = await supabase.functions.invoke('generate-content', {
       body: {
-        model: "gemini-3-pro-preview", // Nuevo modelo de vanguardia solicitado por el usuario
+        model: "gemini-1.5-flash", // Restaurado por falta de cuota en el modelo Pro
         prompt: prompt,
         responseMimeType: "application/json",
         responseSchema: {
