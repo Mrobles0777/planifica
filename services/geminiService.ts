@@ -153,7 +153,7 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
   try {
     const { data: responseData, error } = await supabase.functions.invoke('generate-content', {
       body: {
-        model: "gemini-3-pro-preview",
+        model: "gemini-1.5-flash",
         prompt: prompt,
         responseMimeType: "application/json",
         responseSchema: {
@@ -255,7 +255,7 @@ export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planni
   try {
     const { data: responseData, error } = await supabase.functions.invoke('generate-content', {
       body: {
-        model: "gemini-3-pro-preview",
+        model: "gemini-1.5-flash",
         prompt: prompt,
         responseMimeType: "application/json",
         responseSchema: {
