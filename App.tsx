@@ -332,7 +332,9 @@ const App: React.FC = () => {
             setErrorMessage("✅ Conexión establecida pero la respuesta no fue la esperada.");
           }
         } catch (e: any) {
-          setErrorMessage("⚠️ Error crítico: La red base funciona, pero falla el envío a la Edge Function.");
+          console.error("Diagnostic invoke error:", e);
+          const detail = e.message || "Error desconocido";
+          setErrorMessage(`⚠️ Error crítico: La red base funciona, pero falla el envío a la Edge Function. Detalle: ${detail}`);
         }
       }
     } catch (err: any) {

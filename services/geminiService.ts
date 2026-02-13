@@ -28,13 +28,19 @@ function parseJSONResponse(text: string) {
 async function handleAIError(error: any) {
   console.error("AI Service Error:", error);
 
+  // Intentamos extraer el mensaje de error del cuerpo de la respuesta de Supabase
   if (error.context && typeof error.context.json === 'function') {
     try {
       const body = await error.context.json();
       if (body.error) return new Error(body.error);
     } catch (e) {
-      // Ignore parsing error
+      // Ignorar error de parseo
     }
+  }
+
+  // Si es un error de la función de Supabase (ej: Error 500)
+  if (error.message?.includes('Edge Function returned a non-2xx status code')) {
+    return new Error("La función de IA falló. Revisa si la GEMINI_API_KEY esta configurada en Supabase.");
   }
 
   return new Error(error.message || "Error al conectar con el servicio de IA.");
@@ -90,12 +96,12 @@ export async function generateAssessmentDetails(
         prompt: prompt,
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.OBJECT,
+          type: "OBJECT",
           properties: {
-            activityName: { type: Type.STRING },
-            description: { type: Type.STRING },
-            indicators: { type: Type.ARRAY, items: { type: Type.STRING } },
-            materials: { type: Type.ARRAY, items: { type: Type.STRING } }
+            activityName: { type: "STRING" },
+            description: { type: "STRING" },
+            indicators: { type: "ARRAY", items: { type: "STRING" } },
+            materials: { type: "ARRAY", items: { type: "STRING" } }
           },
           required: ["activityName", "description", "indicators", "materials"]
         }
@@ -151,27 +157,27 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
         prompt: prompt,
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.OBJECT,
+          type: "OBJECT",
           properties: {
-            nivel: { type: Type.STRING },
-            equipo: { type: Type.STRING },
-            mes: { type: Type.STRING },
-            ambitoNucleo: { type: Type.STRING },
+            nivel: { type: "STRING" },
+            equipo: { type: "STRING" },
+            mes: { type: "STRING" },
+            ambitoNucleo: { type: "STRING" },
             planes: {
-              type: Type.ARRAY,
+              type: "ARRAY",
               items: {
-                type: Type.OBJECT,
+                type: "OBJECT",
                 properties: {
-                  objective: { type: Type.STRING },
-                  focoObservacion: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  inicio: { type: Type.STRING },
-                  desarrollo: { type: Type.STRING },
-                  cierre: { type: Type.STRING }
+                  objective: { type: "STRING" },
+                  focoObservacion: { type: "ARRAY", items: { type: "STRING" } },
+                  inicio: { type: "STRING" },
+                  desarrollo: { type: "STRING" },
+                  cierre: { type: "STRING" }
                 },
                 required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
               }
             },
-            mediacion: { type: Type.STRING }
+            mediacion: { type: "STRING" }
           },
           required: ["nivel", "ambitoNucleo", "planes", "mediacion"]
         }
@@ -253,27 +259,27 @@ export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planni
         prompt: prompt,
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.OBJECT,
+          type: "OBJECT",
           properties: {
-            nivel: { type: Type.STRING },
-            equipo: { type: Type.STRING },
-            mes: { type: Type.STRING },
-            ambitoNucleo: { type: Type.STRING },
+            nivel: { type: "STRING" },
+            equipo: { type: "STRING" },
+            mes: { type: "STRING" },
+            ambitoNucleo: { type: "STRING" },
             planes: {
-              type: Type.ARRAY,
+              type: "ARRAY",
               items: {
-                type: Type.OBJECT,
+                type: "OBJECT",
                 properties: {
-                  objective: { type: Type.STRING },
-                  focoObservacion: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  inicio: { type: Type.STRING },
-                  desarrollo: { type: Type.STRING },
-                  cierre: { type: Type.STRING }
+                  objective: { type: "STRING" },
+                  focoObservacion: { type: "ARRAY", items: { type: "STRING" } },
+                  inicio: { type: "STRING" },
+                  desarrollo: { type: "STRING" },
+                  cierre: { type: "STRING" }
                 },
                 required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
               }
             },
-            mediacion: { type: Type.STRING }
+            mediacion: { type: "STRING" }
           },
           required: ["nivel", "ambitoNucleo", "planes", "mediacion"]
         }
