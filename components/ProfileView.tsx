@@ -160,10 +160,20 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, session, setView, onUpd
                             {isUploading ? (
                                 <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
                             ) : formData.avatarUrl ? (
-                                <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                <img
+                                    src={formData.avatarUrl}
+                                    alt="Avatar"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        // Si la URL falla, volvemos al icono
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                                    }}
+                                />
                             ) : (
                                 <UserIcon className="w-16 h-16 text-slate-300" />
                             )}
+                            <UserIcon className="w-16 h-16 text-slate-300 hidden fallback-icon" />
                         </div>
                         <div className="absolute -bottom-2 -right-2 flex gap-2">
                             <button

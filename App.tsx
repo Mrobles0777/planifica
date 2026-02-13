@@ -613,11 +613,18 @@ const App: React.FC = () => {
                   <p className="text-[12px] font-black text-sky-400 uppercase tracking-[0.5em] mt-3">Documento Profesional</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-[11px] font-black text-slate-300 uppercase mb-1">Emitido el</p>
-                <p className="text-sm font-black text-slate-800 bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100">
-                  {activePlanning.mes || new Date().toLocaleDateString('es-CL')}
-                </p>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-[11px] font-black text-slate-300 uppercase mb-1">Emitido el</p>
+                  <p className="text-sm font-black text-slate-800 bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100">
+                    {activePlanning.mes || new Date().toLocaleDateString('es-CL')}
+                  </p>
+                </div>
+                {user?.avatarUrl && (
+                  <div className="w-20 h-20 rounded-3xl border-4 border-slate-50 overflow-hidden shadow-sm bg-slate-50 flex items-center justify-center shrink-0">
+                    <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
             </div>
 

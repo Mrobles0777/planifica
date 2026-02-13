@@ -41,6 +41,17 @@ const Layout: React.FC<LayoutProps> = ({ user, view, setView, handleLogout, erro
               <span className="text-[10px] font-black text-slate-400 uppercase leading-none">Conectada</span>
               <span className="text-[11px] font-bold text-slate-800 truncate max-w-[120px]">{user?.firstName}</span>
             </div>
+            <div
+              onClick={() => setView('profile')}
+              className="w-10 h-10 rounded-full border-2 border-slate-100 bg-slate-50 flex items-center justify-center overflow-hidden cursor-pointer hover:border-sky-300 transition-all shadow-sm"
+              title="Mi Perfil"
+            >
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <UserIcon className="w-5 h-5 text-slate-300" />
+              )}
+            </div>
             <button
               onClick={handleLogout}
               className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 border border-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all active:scale-90 shadow-sm"
