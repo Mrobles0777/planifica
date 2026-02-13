@@ -321,22 +321,25 @@ const App: React.FC = () => {
         try {
           const { data, error } = await supabase.functions.invoke('generate-content', { body: { prompt: 'ping' } });
           if (error) {
-            console.error("FULL DIAGNOSTIC ERROR OBJECT:", error);
-            let serverError = error.message;
+            console.error("DEBUG - Full FunctionsError:", error);
+            let displayMsg = error.message || "Error desconocido";
 
-            // Si hay un status HTTP lo mostramos
-            if (error.status) serverError = `[HTTP ${error.status}] ${serverError}`;
+            try {
+              if (error.status) displayMsg = `[Status ${error.status}] ${displayMsg}`;
 
-            if (error.context && typeof error.context.json === 'function') {
-              try {
+              if (error.context && typeof error.context.text === 'function') {
+                const rawText = await error.context.text();
+                console.log("DEBUG - Raw Error Text:", rawText);
+                if (rawText) displayMsg += ` - Cuerpo: ${rawText.substring(0, 80)}`;
+              } else if (error.context && typeof error.context.json === 'function') {
                 const body = await error.context.json();
-                console.log("Error body extracted:", body);
-                if (body.error) serverError += ` - Detalle: ${body.error}`;
-              } catch (e) {
-                console.log("Could not parse error body as JSON");
+                if (body.error) displayMsg += ` - Detalle: ${body.error}`;
               }
+            } catch (inner) {
+              console.error("Failed to extract further details:", inner);
             }
-            setErrorMessage(`⚠️ La función respondió error: ${serverError}. Asegúrate de desplegar con 'npx supabase functions deploy generate-content' y que la GEMINI_API_KEY esté configurada.`);
+
+            setErrorMessage(`⚠️ Error en Función: ${displayMsg}. Revisa los logs con 'npx supabase functions logs generate-content'`);
           } else if (data && data.status === "ok") {
             if (data.hasApiKey) {
               setErrorMessage(`✅ Conexión perfecta: Supabase activa y detecta API Key (Empieza por: ${data.apiKeyPrefix}).`);
