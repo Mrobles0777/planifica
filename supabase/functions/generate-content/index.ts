@@ -11,7 +11,7 @@ serve(async (req) => {
         });
     }
     try {
-        const { prompt, model = "gemini-1.5-flash", responseSchema, responseMimeType } = await req.json();
+        const { prompt, model = "gemini-2.0-flash", responseSchema, responseMimeType } = await req.json();
         const apiKey = Deno.env.get('GEMINI_API_KEY');
         // Modo diagnóstico
         if (prompt === "ping") {
