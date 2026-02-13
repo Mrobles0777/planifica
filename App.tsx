@@ -321,14 +321,22 @@ const App: React.FC = () => {
         try {
           const { data, error } = await supabase.functions.invoke('generate-content', { body: { prompt: 'ping' } });
           if (error) {
+            console.error("FULL DIAGNOSTIC ERROR OBJECT:", error);
             let serverError = error.message;
+
+            // Si hay un status HTTP lo mostramos
+            if (error.status) serverError = `[HTTP ${error.status}] ${serverError}`;
+
             if (error.context && typeof error.context.json === 'function') {
               try {
                 const body = await error.context.json();
-                if (body.error) serverError = body.error;
-              } catch (e) { }
+                console.log("Error body extracted:", body);
+                if (body.error) serverError += ` - Detalle: ${body.error}`;
+              } catch (e) {
+                console.log("Could not parse error body as JSON");
+              }
             }
-            setErrorMessage(`⚠️ La función respondió error: ${serverError}. Asegúrate de haber ejecutado 'supabase functions deploy generate-content'.`);
+            setErrorMessage(`⚠️ La función respondió error: ${serverError}. Asegúrate de desplegar con 'npx supabase functions deploy generate-content' y que la GEMINI_API_KEY esté configurada.`);
           } else if (data && data.status === "ok") {
             if (data.hasApiKey) {
               setErrorMessage(`✅ Conexión perfecta: Supabase activa y detecta API Key (Empieza por: ${data.apiKeyPrefix}).`);
