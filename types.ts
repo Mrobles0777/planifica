@@ -62,10 +62,15 @@ export interface ObjectivePlan {
 }
 
 export interface Planning {
+  titulo?: string;
+  metodologia?: string;
+  materiales?: string[];
   nivel: string;
   equipo?: string;
   mes?: string;
   ambitoNucleo: string;
   planes: ObjectivePlan[];
+  totalPlanes?: number;
   mediacion: string;
 }
+

@@ -62,6 +62,11 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                                 <div>
                                     <h1 className="text-6xl font-black text-slate-900 italic">Planifica</h1>
                                     <p className="text-[14px] font-bold text-sky-400 uppercase tracking-[0.5em] mt-3">Documento Profesional</p>
+                                    {activePlanning.titulo && (
+                                        <div className="mt-4 bg-sky-50 px-6 py-2 rounded-2xl border border-sky-100">
+                                            <p className="text-lg font-black text-slate-800 italic">{activePlanning.titulo}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="text-right">
@@ -72,7 +77,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6 mb-16">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-16">
                             <div className="bg-sky-50/50 p-8 rounded-[2.5rem] border-2 border-sky-100 flex items-center gap-6">
                                 <div className="p-4 bg-white rounded-2xl text-sky-500 shadow-sm"><Target className="w-8 h-8" /></div>
                                 <div>
@@ -87,7 +92,30 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                                     <div className="text-xl font-black text-slate-900">{activePlanning.equipo || 'Docente'}</div>
                                 </div>
                             </div>
+                            <div className="bg-emerald-50/50 p-8 rounded-[2.5rem] border-2 border-emerald-100 flex items-center gap-6">
+                                <div className="p-4 bg-white rounded-2xl text-emerald-500 shadow-sm"><Star className="w-8 h-8" /></div>
+                                <div>
+                                    <div className="text-[11px] font-black text-emerald-500 uppercase mb-1 tracking-widest">Metodología</div>
+                                    <div className="text-xl font-black text-slate-900">{activePlanning.metodologia || 'Estándar'}</div>
+                                </div>
+                            </div>
                         </div>
+
+                        {activePlanning.materiales && activePlanning.materiales.length > 0 && (
+                            <div className="mb-16 p-10 bg-slate-50 border-2 border-slate-200 rounded-[3rem] space-y-6">
+                                <h4 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3">
+                                    <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                                    Caja de Materiales
+                                </h4>
+                                <div className="flex flex-wrap gap-3">
+                                    {activePlanning.materiales.map((m, i) => (
+                                        <span key={i} className="px-5 py-2 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 shadow-sm">
+                                            {m}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="space-y-8">
                             {activePlanning.planes.map((plan, idx) => (

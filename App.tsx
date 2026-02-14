@@ -609,6 +609,9 @@ const App: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-5xl font-black text-slate-800 tracking-tighter italic">Planifica</h1>
+                  {activePlanning.titulo && (
+                    <p className="text-lg font-black text-sky-600 italic mt-2">{activePlanning.titulo}</p>
+                  )}
                 </div>
               </div>
               <div className="text-right">
@@ -684,14 +687,30 @@ const App: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">
-                    EL ÁMBITO
+                    METODOLOGÍA
                   </div>
-                  <div className="text-[11px] font-black text-slate-800 leading-tight truncate">
-                    {activePlanning.ambitoNucleo || 'Desarrollo Personal'}
+                  <div className="text-sm font-black text-slate-800 leading-tight truncate">
+                    {activePlanning.metodologia || 'Estándar'}
                   </div>
                 </div>
               </div>
             </div>
+
+            {activePlanning.materiales && activePlanning.materiales.length > 0 && (
+              <div className="mb-10 p-8 bg-slate-50 border-2 border-slate-100 rounded-[2.5rem] space-y-4">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
+                  CAJA DE MATERIALES
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {activePlanning.materiales.map((m, i) => (
+                    <span key={i} className="px-4 py-1.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 shadow-sm">
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4">
               {activePlanning.planes.map((plan, idx) => (

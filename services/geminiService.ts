@@ -147,7 +147,11 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
     - Actividad: ${assessment.activityName}
     - Metodología: ${assessment.methodology}
 
-    IMPORTANTE: Genera un bloque de planificación técnica profesional con Inicio, Desarrollo, Cierre y Foco de Observación.
+    IMPORTANTE: Genera un bloque de planificación técnica profesional con:
+    1. Un "titulo" creativo y técnico para esta experiencia.
+    2. "metodologia" (usa exactamete: "${assessment.methodology}").
+    3. "materiales" (un array con los materiales necesarios para la actividad).
+    4. Inicio, Desarrollo, Cierre y Foco de Observación para cada bloque de planes.
   `;
 
   try {
@@ -159,6 +163,9 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
         responseSchema: {
           type: "OBJECT",
           properties: {
+            titulo: { type: "STRING" },
+            metodologia: { type: "STRING" },
+            materiales: { type: "ARRAY", items: { type: "STRING" } },
             nivel: { type: "STRING" },
             equipo: { type: "STRING" },
             mes: { type: "STRING" },
@@ -232,9 +239,15 @@ export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planni
     3. El campo "ambitoNucleo" debe ser "Plan de Aprendizajes Integrados".
     4. El campo "nivel" debe ser el nivel predominante de los documentos.
     5. El campo "mediacion" debe ser una reflexión profunda sobre cómo se conectan estas experiencias para potenciar el aprendizaje integral.
+    6. Genera un "titulo" integrador para todo el plan.
+    7. Genera un array consolidado de "materiales" (sin duplicados) necesarios para todas las actividades del plan.
+    8. El campo "metodologia" debe ser "Planificación Integrada".
 
     ESTRUCTURA DE SALIDA (JSON):
     {
+      "titulo": "Título Integrador",
+      "metodologia": "Planificación Integrada",
+      "materiales": ["material 1", "material 2"],
       "nivel": "Nivel correspondiente",
       "ambitoNucleo": "Plan de Aprendizajes Integrados",
       "planes": [
@@ -261,6 +274,9 @@ export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planni
         responseSchema: {
           type: "OBJECT",
           properties: {
+            titulo: { type: "STRING" },
+            metodologia: { type: "STRING" },
+            materiales: { type: "ARRAY", items: { type: "STRING" } },
             nivel: { type: "STRING" },
             equipo: { type: "STRING" },
             mes: { type: "STRING" },
