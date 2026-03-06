@@ -11,9 +11,10 @@ interface ChildrenListViewProps {
     setView: (view: any) => void;
     children: Child[];
     setChildren: React.Dispatch<React.SetStateAction<Child[]>>;
+    session: any;
 }
 
-const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, setChildren }) => {
+const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, setChildren, session }) => {
     const [showForm, setShowForm] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -30,6 +31,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
         e.preventDefault();
         try {
             const newChildData = {
+                user_id: session.user.id,
                 first_name: formData.firstName,
                 last_name: formData.lastName,
                 birth_date: formData.birthDate,

@@ -653,7 +653,7 @@ const App: React.FC = () => {
         )}
 
         {view === 'children-list' && (
-          <ChildrenListView setView={handleViewChange} children={children} setChildren={setChildren} />
+          <ChildrenListView setView={handleViewChange} children={children} setChildren={setChildren} session={session} />
         )}
 
         {view === 'profile' && (
