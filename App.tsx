@@ -96,35 +96,57 @@ const App: React.FC = () => {
   }, [fetchSavedItems]);
 
   useEffect(() => {
-    // Escuchar cambios de autenticación (esto también maneja la sesión inicial)
+    // Check session immediately and set up subscription
+    const initAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
+        if (initialSession) {
+          await fetchUserData(initialSession.user.id);
+        }
+      } catch (err) {
+        console.error("Auth init error:", err);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initAuth();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
 
-      if (event === 'PASSWORD_RECOVERY') {
-        setView('password-reset');
+      try {
+        if (event === 'PASSWORD_RECOVERY') {
+          setView('password-reset');
+          return;
+        }
+
+        if (session) {
+          await fetchUserData(session.user.id);
+          setView(currentView => {
+            if (currentView === 'login' || currentView === 'password-reset') return 'home';
+            return currentView;
+          });
+        } else {
+          setUser(null);
+          setSavedItems([]);
+          setView('login');
+        }
+      } catch (err) {
+        console.error("Auth state change error:", err);
+      } finally {
         setIsInitializing(false);
-        return;
       }
-
-      if (session) {
-        // Solo cargar datos si no los tenemos o si es un evento de login/cambio
-        await fetchUserData(session.user.id);
-
-        // No forzar 'home' si ya estamos en una vista protegida válida (como profile)
-        setView(currentView => {
-          if (currentView === 'login' || currentView === 'password-reset') return 'home';
-          return currentView;
-        });
-      } else {
-        setUser(null);
-        setSavedItems([]);
-        setView('login');
-      }
-
-      setIsInitializing(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Safety timeout: never stay stuck more than 5 seconds
+    const safetyTimeout = setTimeout(() => setIsInitializing(false), 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
   }, [fetchUserData]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
