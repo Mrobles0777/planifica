@@ -97,14 +97,21 @@ body {
   background: #facc15;
 }
 
-/* UI Animations */
+
+/* UI Animations & Transitions */
 .animate-in {
-  animation-duration: 0.5s;
+  animation-duration: 0.4s;
   animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
 .fade-in {
   animation-name: fadeIn;
+}
+
+.zoom-in-95 {
+  animation-name: zoomIn95;
 }
 
 .slide-in-from-bottom-4 {
@@ -116,7 +123,33 @@ body {
   to { opacity: 1; }
 }
 
+@keyframes zoomIn95 {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 @keyframes slideInFromBottom {
   from { transform: translateY(1rem); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+/* Transition Overlay */
+.view-transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-background);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.view-transition-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.blur-load {
+  filter: blur(8px);
+  transition: filter 0.3s ease;
 }
