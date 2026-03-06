@@ -25,6 +25,7 @@ const App: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const [loginForm, setLoginForm] = useState<User>({
     firstName: '', lastName: '', email: '', location: '', phone: '+56 ', password: ''
@@ -452,7 +453,6 @@ const App: React.FC = () => {
     }
     setTimeout(handleExportPDF, 800);
   };
-
   const resetForm = () => {
     setSelectedLevel(null); setSelectedNucleo(null); setSelectedObjective(null);
     setSelectedDate(new Date().toISOString().split('T')[0]);
@@ -464,11 +464,22 @@ const App: React.FC = () => {
     const plan = item.content;
     if (item.plan_type === 'planning_global') {
       setGlobalPlanningResult(plan);
-      setView('global-planning');
+      handleViewChange('global-planning');
     } else {
       setCurrentPlanning(plan);
-      setView('planning');
+      handleViewChange('planning');
     }
+  };
+
+  const handleViewChange = (newView: any) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setView(newView);
+      window.scrollTo(0, 0);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
+    }, 250);
   };
 
   const groupedData = useMemo(() => {
@@ -528,84 +539,86 @@ const App: React.FC = () => {
   }
 
   return (
-    <Layout user={user} view={view} setView={setView} handleLogout={handleLogout} errorMessage={errorMessage} setErrorMessage={setErrorMessage}>
-      {view === 'home' && (
-        <HomeView
-          user={user}
-          planningItemsCount={planningItems.length}
-          setView={setView}
-          resetForm={resetForm}
-        />
-      )}
+    <Layout user={user} view={view} setView={handleViewChange} handleLogout={handleLogout} errorMessage={errorMessage} setErrorMessage={setErrorMessage}>
+      <div className={`transition-all duration-300 ${isTransitioning ? 'blur-load opacity-40 scale-[0.98]' : 'opacity-100 scale-100'}`}>
+        {view === 'home' && (
+          <HomeView
+            user={user}
+            planningItemsCount={planningItems.length}
+            setView={handleViewChange}
+            resetForm={resetForm}
+          />
+        )}
 
-      {view === 'history' && (
-        <HistoryView
-          planningItems={planningItems}
-          isGeneratingGlobal={isGeneratingGlobal}
-          isDeleting={isDeleting}
-          setView={setView}
-          handleGenerateGlobalPlanning={handleGenerateGlobalPlanning}
-          handleQuickExport={handleQuickExport}
-          deleteItem={deleteItem}
-          openSavedPlanning={openSavedPlanning}
-        />
-      )}
+        {view === 'history' && (
+          <HistoryView
+            planningItems={planningItems}
+            isGeneratingGlobal={isGeneratingGlobal}
+            isDeleting={isDeleting}
+            setView={handleViewChange}
+            handleGenerateGlobalPlanning={handleGenerateGlobalPlanning}
+            handleQuickExport={handleQuickExport}
+            deleteItem={deleteItem}
+            openSavedPlanning={openSavedPlanning}
+          />
+        )}
 
-      {(view === 'planning' || view === 'global-planning') && (
-        <PlanningView
-          activePlanning={activePlanning}
-          setView={setView}
-          savePlanning={savePlanning}
-          handleExportPDF={handleExportPDF}
-          isSaving={isSaving}
-          isExporting={isExporting}
-        />
-      )}
+        {(view === 'planning' || view === 'global-planning') && (
+          <PlanningView
+            activePlanning={activePlanning}
+            setView={handleViewChange}
+            savePlanning={savePlanning}
+            handleExportPDF={handleExportPDF}
+            isSaving={isSaving}
+            isExporting={isExporting}
+          />
+        )}
 
-      {view === 'create' && (
-        <CreateView
-          currentAssessment={currentAssessment}
-          setCurrentAssessment={setCurrentAssessment}
-          selectedLevel={selectedLevel}
-          setSelectedLevel={setSelectedLevel}
-          selectedNucleo={selectedNucleo}
-          setSelectedNucleo={setSelectedNucleo}
-          selectedObjective={selectedObjective}
-          setSelectedObjective={setSelectedObjective}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          selectedMethodology={selectedMethodology}
-          setSelectedMethodology={setSelectedMethodology}
-          expandedAmbito={expandedAmbito}
-          toggleAmbito={toggleAmbito}
-          groupedData={groupedData}
-          isGenerating={isGenerating}
-          handleGenerate={handleGenerate}
-          handleGeneratePlanning={handleGeneratePlanning}
-          isGeneratingPlanning={isGeneratingPlanning}
-          setView={setView}
-          openMaterialSearch={openMaterialSearch}
-        />
-      )}
+        {view === 'create' && (
+          <CreateView
+            currentAssessment={currentAssessment}
+            setCurrentAssessment={setCurrentAssessment}
+            selectedLevel={selectedLevel}
+            setSelectedLevel={setSelectedLevel}
+            selectedNucleo={selectedNucleo}
+            setSelectedNucleo={setSelectedNucleo}
+            selectedObjective={selectedObjective}
+            setSelectedObjective={setSelectedObjective}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            selectedMethodology={selectedMethodology}
+            setSelectedMethodology={setSelectedMethodology}
+            expandedAmbito={expandedAmbito}
+            toggleAmbito={toggleAmbito}
+            groupedData={groupedData}
+            isGenerating={isGenerating}
+            handleGenerate={handleGenerate}
+            handleGeneratePlanning={handleGeneratePlanning}
+            isGeneratingPlanning={isGeneratingPlanning}
+            setView={handleViewChange}
+            openMaterialSearch={openMaterialSearch}
+          />
+        )}
 
-      {view === 'evaluations' && (
-        <EvaluationsView />
-      )}
+        {view === 'evaluations' && (
+          <EvaluationsView />
+        )}
 
-      {view === 'children-list' && (
-        <ChildrenListView setView={setView} />
-      )}
+        {view === 'children-list' && (
+          <ChildrenListView setView={handleViewChange} />
+        )}
 
-      {view === 'profile' && (
-        <ProfileView
-          user={user}
-          session={session}
-          setView={setView}
-          onUpdateUser={(updated) => setUser(updated)}
-          isDiagnosing={isDiagnosing}
-          handleDiagnose={handleDiagnose}
-        />
-      )}
+        {view === 'profile' && (
+          <ProfileView
+            user={user}
+            session={session}
+            setView={handleViewChange}
+            onUpdateUser={(updated) => setUser(updated)}
+            isDiagnosing={isDiagnosing}
+            handleDiagnose={handleDiagnose}
+          />
+        )}
+      </div>
 
       {/* DOCUMENTO TÉCNICO OCULTO PARA EXPORTACIÓN PDF */}
       <div style={{ position: 'fixed', left: '-10000px', top: '0', width: '210mm', minHeight: '297mm', background: 'white' }} className="no-print">
@@ -758,6 +771,9 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* View Transition Overlay */}
+      <div className={`view-transition-overlay ${isTransitioning ? 'active' : ''}`} />
     </Layout>
   );
 };
