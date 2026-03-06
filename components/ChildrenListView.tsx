@@ -1,3 +1,5 @@
+import React, { useState } from 'react';
+import { ArrowLeft, Plus, Baby, Calendar, GraduationCap, Info, Syringe, AlertCircle, Trash2, UserPlus } from 'lucide-react';
 import { Child, Level } from '../types';
 import { supabase } from '../supabaseClient';
 function formatDateForSupabase(dateStr: string) {
