@@ -74,3 +74,15 @@ export interface Planning {
   mediacion: string;
 }
 
+
+export interface Child {
+  id: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  level: Level;
+  vaccines?: string;
+  allergies?: string;
+  otherInfo?: string;
+  createdAt: string;
+}

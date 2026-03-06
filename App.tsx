@@ -14,11 +14,13 @@ import CreateView from './components/CreateView';
 import PlanningView from './components/PlanningView';
 import PasswordResetView from './components/PasswordResetView';
 import ProfileView from './components/ProfileView';
+import EvaluationsView from './components/EvaluationsView';
+import ChildrenListView from './components/ChildrenListView';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<any>(null);
-  const [view, setView] = useState<'home' | 'create' | 'history' | 'planning' | 'global-planning' | 'login' | 'password-reset' | 'profile'>('login');
+  const [view, setView] = useState<'home' | 'create' | 'history' | 'planning' | 'global-planning' | 'login' | 'password-reset' | 'profile' | 'evaluations' | 'children-list'>('login');
   const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -584,6 +586,14 @@ const App: React.FC = () => {
           setView={setView}
           openMaterialSearch={openMaterialSearch}
         />
+      )}
+
+      {view === 'evaluations' && (
+        <EvaluationsView />
+      )}
+
+      {view === 'children-list' && (
+        <ChildrenListView setView={setView} />
       )}
 
       {view === 'profile' && (

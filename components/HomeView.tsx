@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cloud, Plus, FileText, ChevronRight } from 'lucide-react';
+import { Cloud, Plus, FileText, ChevronRight, Target } from 'lucide-react';
 import { User } from '../types';
 
 interface HomeViewProps {
@@ -38,17 +38,31 @@ const HomeView: React.FC<HomeViewProps> = ({ user, planningItemsCount, setView, 
                 </button>
 
                 <button
-                    onClick={() => { setView('history'); }}
-                    className="flex items-center gap-4 bg-white p-8 rounded-[2.5rem] border-4 border-amber-50 shadow-xl hover:shadow-2xl hover:border-amber-100 transition-all active:scale-95 group text-left"
+                    onClick={() => { setView('evaluations'); }}
+                    className="flex items-center gap-4 bg-white p-8 rounded-[2.5rem] border-4 border-rose-50 shadow-xl hover:shadow-2xl hover:border-rose-100 transition-all active:scale-95 group text-left"
                 >
-                    <div className="p-5 bg-amber-100 rounded-2xl group-hover:bg-amber-200 transition-colors">
-                        <FileText className="text-amber-600 w-8 h-8" />
+                    <div className="p-5 bg-rose-100 rounded-2xl group-hover:bg-rose-200 transition-colors">
+                        <Target className="text-rose-600 w-8 h-8" />
                     </div>
                     <div className="flex-1">
-                        <p className="font-black text-slate-800 text-xl">Mi Baúl</p>
-                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">Documentos oficiales</p>
+                        <p className="font-black text-slate-800 text-xl">Evaluaciones</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">Seguimiento de logros</p>
                     </div>
-                    <ChevronRight className="text-amber-200 w-8 h-8 group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight className="text-rose-200 w-8 h-8 group-hover:translate-x-1 transition-transform" />
+                </button>
+
+                <button
+                    onClick={() => { setView('children-list'); }}
+                    className="flex items-center gap-4 bg-white p-8 rounded-[2.5rem] border-4 border-sky-50 shadow-xl hover:shadow-2xl hover:border-sky-100 transition-all active:scale-95 group text-left"
+                >
+                    <div className="p-5 bg-sky-100 rounded-2xl group-hover:bg-sky-200 transition-colors">
+                        <Cloud className="text-sky-600 w-8 h-8" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="font-black text-slate-800 text-xl">Listado Base</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">Gestión de mi grupo</p>
+                    </div>
+                    <ChevronRight className="text-sky-200 w-8 h-8 group-hover:translate-x-1 transition-transform" />
                 </button>
             </div>
         </div>
