@@ -54,6 +54,7 @@ const App: React.FC = () => {
   const [globalPlanningResult, setGlobalPlanningResult] = useState<Planning | null>(null);
 
   const [savedItems, setSavedItems] = useState<any[]>([]);
+  const [children, setChildren] = useState<Child[]>([]);
   const [focusedAssessment, setFocusedAssessment] = useState<GeneratedAssessment | null>(null);
 
   const fetchSavedItems = useCallback(async () => {
@@ -73,6 +74,28 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const fetchChildren = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from('children').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      if (data) {
+        setChildren(data.map(item => ({
+          id: item.id,
+          firstName: item.first_name,
+          lastName: item.last_name,
+          birthDate: item.birth_date,
+          level: item.level as Level,
+          vaccines: item.vaccines,
+          allergies: item.allergies,
+          otherInfo: item.other_info,
+          createdAt: item.created_at
+        })));
+      }
+    } catch (err) {
+      console.error("Fetch children error:", err);
+    }
+  }, []);
+
   const fetchUserData = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
@@ -89,11 +112,13 @@ const App: React.FC = () => {
         setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
       }
       fetchSavedItems();
+      fetchChildren();
     } catch (err: any) {
       setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
       fetchSavedItems();
+      fetchChildren();
     }
-  }, [fetchSavedItems]);
+  }, [fetchSavedItems, fetchChildren]);
 
   useEffect(() => {
     // Check session immediately and set up subscription
@@ -131,6 +156,7 @@ const App: React.FC = () => {
         } else {
           setUser(null);
           setSavedItems([]);
+          setChildren([]);
           setView('login');
         }
       } catch (err) {
@@ -623,11 +649,11 @@ const App: React.FC = () => {
         )}
 
         {view === 'evaluations' && (
-          <EvaluationsView />
+          <EvaluationsView setView={handleViewChange} children={children} />
         )}
 
         {view === 'children-list' && (
-          <ChildrenListView setView={handleViewChange} />
+          <ChildrenListView setView={handleViewChange} children={children} setChildren={setChildren} />
         )}
 
         {view === 'profile' && (

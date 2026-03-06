@@ -75,6 +75,7 @@ export interface Planning {
 }
 
 
+
 export interface Child {
   id: string;
   firstName: string;
@@ -84,5 +85,25 @@ export interface Child {
   vaccines?: string;
   allergies?: string;
   otherInfo?: string;
+  createdAt: string;
+}
+
+export type AchievementLevel = 'None' | 'NT1' | 'NT2' | '1 EGB';
+
+export interface EvaluationIndicator {
+  id: string;
+  text: string;
+  evaluations: (AchievementLevel | null)[]; // Array of 3 evaluations as per HTML
+  finalAchievement: AchievementLevel;
+}
+
+export interface EvaluationSession {
+  id: string;
+  establishment: string;
+  rbd: string;
+  level: string;
+  year: string;
+  childIds: string[]; // Linked to children from Listado Base
+  indicators: EvaluationIndicator[];
   createdAt: string;
 }

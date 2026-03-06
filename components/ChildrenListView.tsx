@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
-import { UserPlus, Baby, Calendar, GraduationCap, Syringe, AlertCircle, Info, Trash2, Plus, ArrowLeft } from 'lucide-react';
 import { Child, Level } from '../types';
+import { supabase } from '../supabaseClient';
+function formatDateForSupabase(dateStr: string) {
+    if (!dateStr) return null;
+    return dateStr;
+}
 
 interface ChildrenListViewProps {
     setView: (view: any) => void;
+    children: Child[];
+    setChildren: React.Dispatch<React.SetStateAction<Child[]>>;
 }
 
-const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView }) => {
-    const [children, setChildren] = useState<Child[]>([]);
+const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, setChildren }) => {
     const [showForm, setShowForm] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -20,29 +24,71 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView }) => {
         otherInfo: ''
     });
 
-    const handleAddChild = (e: React.FormEvent) => {
+    const handleAddChild = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newChild: Child = {
-            id: crypto.randomUUID(),
-            ...formData,
-            createdAt: new Date().toISOString()
-        };
-        setChildren([newChild, ...children]);
-        setShowForm(false);
-        setFormData({
-            firstName: '',
-            lastName: '',
-            birthDate: '',
-            level: Level.SALA_CUNA,
-            vaccines: '',
-            allergies: '',
-            otherInfo: ''
-        });
+        try {
+            const newChildData = {
+                first_name: formData.firstName,
+                last_name: formData.lastName,
+                birth_date: formData.birthDate,
+                level: formData.level,
+                vaccines: formData.vaccines,
+                allergies: formData.allergies,
+                other_info: formData.otherInfo
+            };
+
+            const { data, error } = await supabase
+                .from('children')
+                .insert([newChildData])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                const newChild: Child = {
+                    id: data.id,
+                    firstName: data.first_name,
+                    lastName: data.last_name,
+                    birthDate: data.birth_date,
+                    level: data.level as Level,
+                    vaccines: data.vaccines,
+                    allergies: data.allergies,
+                    otherInfo: data.other_info,
+                    createdAt: data.created_at
+                };
+                setChildren([newChild, ...children]);
+                setShowForm(false);
+                setFormData({
+                    firstName: '',
+                    lastName: '',
+                    birthDate: '',
+                    level: Level.SALA_CUNA,
+                    vaccines: '',
+                    allergies: '',
+                    otherInfo: ''
+                });
+            }
+        } catch (err) {
+            console.error("Error adding child:", err);
+            alert("No se pudo guardar el niño. Revisa la conexión.");
+        }
     };
 
-    const deleteChild = (id: string) => {
+    const deleteChild = async (id: string) => {
         if (window.confirm('¿Borrar registro de forma permanente?')) {
-            setChildren(children.filter(c => c.id !== id));
+            try {
+                const { error } = await supabase
+                    .from('children')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+                setChildren(children.filter(c => c.id !== id));
+            } catch (err) {
+                console.error("Error deleting child:", err);
+                alert("No se pudo eliminar el registro.");
+            }
         }
     };
 
