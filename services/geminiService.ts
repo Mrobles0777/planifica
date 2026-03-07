@@ -1,13 +1,31 @@
-import { Type } from "@google/genai";
-import { Level, GeneratedAssessment, Methodology, GroundingSource, Planning } from "../types";
+import { Level, GeneratedAssessment, Methodology, Planning } from "../types";
 import { supabase } from "../supabaseClient";
 
+// Modelo principal estable; gemini-2.0-flash tiene disponibilidad general y soporte full de responseSchema en v1beta.
+// Cambia esta constante si el usuario tiene acceso a un modelo más reciente.
+const DEFAULT_GEMINI_MODEL = "gemini-2.0-flash";
+
+// Timeout en el cliente para que el botón nunca se quede bloqueado indefinidamente.
+const CLIENT_TIMEOUT_MS = 55_000;
+
 /**
- * Utility to clean and parse JSON from AI response.
+ * Envuelve una promesa con un timeout. Si el tiempo se agota, lanza un error descriptivo.
  */
-function parseJSONResponse(text: string) {
+function withTimeout<T>(promise: Promise<T>, ms: number, operationName: string): Promise<T> {
+  const timeoutPromise = new Promise<T>((_, reject) =>
+    setTimeout(() => reject(new Error(
+      `La operación "${operationName}" tardó demasiado (>${ms / 1000}s). Revisa tu conexión o intenta de nuevo.`
+    )), ms)
+  );
+  return Promise.race([promise, timeoutPromise]);
+}
+
+/**
+ * Limpia y parsea la respuesta JSON del modelo de IA.
+ */
+function parseJSONResponse(text: string): unknown {
   try {
-    let cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
     return JSON.parse(cleaned);
   } catch (e) {
     const match = text.match(/\{[\s\S]*\}/);
@@ -15,7 +33,7 @@ function parseJSONResponse(text: string) {
       try {
         return JSON.parse(match[0]);
       } catch (innerError) {
-        console.error("Nested parsing failed:", innerError);
+        console.error("Nested JSON parsing failed:", innerError);
       }
     }
     throw new Error("La respuesta del modelo no tiene un formato JSON válido.");
@@ -23,27 +41,49 @@ function parseJSONResponse(text: string) {
 }
 
 /**
- * Helper para manejar errores de Supabase Functions uniformemente.
+ * Maneja errores de Supabase Edge Functions de manera uniforme.
+ * Extrae el mensaje de error del body de la respuesta cuando está disponible.
  */
-async function handleAIError(error: any) {
+async function handleAIError(error: unknown): Promise<Error> {
   console.error("AI Service Error:", error);
 
-  // Intentamos extraer el mensaje de error del cuerpo de la respuesta de Supabase
-  if (error.context && typeof error.context.json === 'function') {
-    try {
-      const body = await error.context.json();
-      if (body.error) return new Error(body.error);
-    } catch (e) {
-      // Ignorar error de parseo
+  if (error && typeof error === 'object') {
+    const supabaseError = error as { context?: { json?: () => Promise<{ error?: string }>, text?: () => Promise<string> }; message?: string; status?: number };
+
+    // Intentamos extraer el mensaje del body de la respuesta de la Edge Function
+    if (supabaseError.context) {
+      try {
+        if (typeof supabaseError.context.json === 'function') {
+          const body = await supabaseError.context.json();
+          if (body?.error) return new Error(body.error);
+        } else if (typeof supabaseError.context.text === 'function') {
+          const rawText = await supabaseError.context.text();
+          if (rawText) {
+            try {
+              const parsed = JSON.parse(rawText);
+              if (parsed?.error) return new Error(parsed.error);
+            } catch {
+              // El body no es JSON, usamos el texto directamente si es corto
+              if (rawText.length < 200) return new Error(rawText);
+            }
+          }
+        }
+      } catch (extractionError) {
+        console.warn("Could not extract error body from Supabase response:", extractionError);
+      }
+    }
+
+    // Error genérico de Edge Function (non-2xx)
+    if (supabaseError.message?.includes('Edge Function returned a non-2xx status code')) {
+      return new Error("La función de IA falló. Revisa si la GEMINI_API_KEY está configurada en Supabase (Perfil → Diagnosticar Conexión).");
+    }
+
+    if (supabaseError.message) {
+      return new Error(supabaseError.message);
     }
   }
 
-  // Si es un error de la función de Supabase (ej: Error 500)
-  if (error.message?.includes('Edge Function returned a non-2xx status code')) {
-    return new Error("La función de IA falló. Revisa si la GEMINI_API_KEY esta configurada en Supabase.");
-  }
-
-  return new Error(error.message || "Error al conectar con el servicio de IA.");
+  return new Error("Error al conectar con el servicio de IA.");
 }
 
 /**
@@ -55,7 +95,6 @@ export async function generateAssessmentDetails(
   objective: string,
   methodology: Methodology
 ): Promise<Omit<GeneratedAssessment, 'level' | 'nucleo' | 'objective' | 'methodology' | 'createdAt'>> {
-  // const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY }); // REMOVED: Secure call via Edge Function
 
   let methodologyPrompt = "";
   if (methodology === Methodology.WALDORF) {
@@ -89,31 +128,40 @@ export async function generateAssessmentDetails(
     }
   `;
 
-  try {
-    const { data: responseData, error } = await supabase.functions.invoke('generate-content', {
-      body: {
-        model: "gemini-3-flash-preview", // Nuevo modelo de alto rendimiento solicitado por el usuario
-        prompt: prompt,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            activityName: { type: "STRING" },
-            description: { type: "STRING" },
-            indicators: { type: "ARRAY", items: { type: "STRING" } },
-            materials: { type: "ARRAY", items: { type: "STRING" } }
-          },
-          required: ["activityName", "description", "indicators", "materials"]
-        }
+  const invokePromise = supabase.functions.invoke('generate-content', {
+    body: {
+      model: DEFAULT_GEMINI_MODEL,
+      prompt: prompt,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          activityName: { type: "STRING" },
+          description: { type: "STRING" },
+          indicators: { type: "ARRAY", items: { type: "STRING" } },
+          materials: { type: "ARRAY", items: { type: "STRING" } }
+        },
+        required: ["activityName", "description", "indicators", "materials"]
       }
-    });
+    }
+  });
+
+  try {
+    const invokeResult = await withTimeout(invokePromise, CLIENT_TIMEOUT_MS, "Crear Aventura");
+    const { data: responseData, error } = invokeResult as { data: { text?: string } | null, error: unknown };
 
     if (error) throw await handleAIError(error);
-    if (!responseData) throw new Error("No se recibio respuesta de la funcion de IA.");
-    const responseText = responseData.text;
-    if (!responseText) throw new Error("La IA devolvio una respuesta vacia.");
+    if (!responseData) throw new Error("No se recibió respuesta de la función de IA.");
 
-    const data = parseJSONResponse(responseText);
+    const responseText = responseData.text;
+    if (!responseText) throw new Error("La IA devolvió una respuesta vacía. Verifica la GEMINI_API_KEY en Supabase.");
+
+    const data = parseJSONResponse(responseText) as {
+      activityName?: string;
+      description?: string;
+      indicators?: string[];
+      materials?: string[];
+    };
 
     return {
       activityName: data.activityName || "Nueva Experiencia",
@@ -122,12 +170,14 @@ export async function generateAssessmentDetails(
       materials: data.materials || [],
       groundingSources: []
     };
-  } catch (error: any) {
-    console.error("Gemini API Error:", error);
-    if (error.message?.includes('fetch') || error.message?.includes('Network')) {
-      throw new Error("Error de red al conectar con Gemini. Revisa tu conexión a internet.");
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error("generateAssessmentDetails Error:", err.message);
+
+    if (err.message.includes('fetch') || err.message.includes('Network') || err.message.includes('Failed to send')) {
+      throw new Error("Error de red al conectar con la función de IA. Revisa tu conexión a internet.");
     }
-    throw error;
+    throw err;
   }
 }
 
@@ -135,8 +185,6 @@ export async function generateAssessmentDetails(
  * Genera la planificación técnica detallada.
  */
 export async function generateVariablePlanning(assessment: GeneratedAssessment): Promise<Planning> {
-  // const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-
   const prompt = `
     Como experto en Educación Parvularia, crea una PLANIFICACIÓN VARIABLE detallada para Chile siguiendo las BCEP.
     
@@ -154,69 +202,71 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
     4. Inicio, Desarrollo, Cierre y Foco de Observación para cada bloque de planes.
   `;
 
-  try {
-    const { data: responseData, error } = await supabase.functions.invoke('generate-content', {
-      body: {
-        model: "gemini-3-flash-preview",
-        prompt: prompt,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            titulo: { type: "STRING" },
-            metodologia: { type: "STRING" },
-            materiales: { type: "ARRAY", items: { type: "STRING" } },
-            nivel: { type: "STRING" },
-            equipo: { type: "STRING" },
-            mes: { type: "STRING" },
-            ambitoNucleo: { type: "STRING" },
-            planes: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  objective: { type: "STRING" },
-                  focoObservacion: { type: "ARRAY", items: { type: "STRING" } },
-                  inicio: { type: "STRING" },
-                  desarrollo: { type: "STRING" },
-                  cierre: { type: "STRING" }
-                },
-                required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
-              }
-            },
-            mediacion: { type: "STRING" }
+  const invokePromise = supabase.functions.invoke('generate-content', {
+    body: {
+      model: DEFAULT_GEMINI_MODEL,
+      prompt: prompt,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          titulo: { type: "STRING" },
+          metodologia: { type: "STRING" },
+          materiales: { type: "ARRAY", items: { type: "STRING" } },
+          nivel: { type: "STRING" },
+          equipo: { type: "STRING" },
+          mes: { type: "STRING" },
+          ambitoNucleo: { type: "STRING" },
+          planes: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                objective: { type: "STRING" },
+                focoObservacion: { type: "ARRAY", items: { type: "STRING" } },
+                inicio: { type: "STRING" },
+                desarrollo: { type: "STRING" },
+                cierre: { type: "STRING" }
+              },
+              required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
+            }
           },
-          required: ["nivel", "ambitoNucleo", "planes", "mediacion"]
-        }
+          mediacion: { type: "STRING" }
+        },
+        required: ["nivel", "ambitoNucleo", "planes", "mediacion"]
       }
-    });
+    }
+  });
+
+  try {
+    const invokeResult = await withTimeout(invokePromise, CLIENT_TIMEOUT_MS, "Generar Planificación");
+    const { data: responseData, error } = invokeResult as { data: { text?: string } | null, error: unknown };
 
     if (error) throw await handleAIError(error);
-    if (!responseData?.text) throw new Error("No se recibio contenido para la planificacion.");
-    return parseJSONResponse(responseData.text);
-  } catch (error: any) {
-    console.error("Gemini API Error (Variable Planning):", error);
-    if (error.message?.includes('fetch')) throw new Error("Error de red en planificación.");
-    throw error;
+    if (!responseData?.text) throw new Error("No se recibió contenido para la planificación.");
+
+    return parseJSONResponse(responseData.text) as Planning;
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error("generateVariablePlanning Error:", err.message);
+
+    if (err.message.includes('fetch')) throw new Error("Error de red en planificación variable.");
+    throw err;
   }
 }
 
 /**
  * Genera una planificación integrada global a partir de múltiples documentos técnicos.
  */
-export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planning> {
-  // const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-
-  // Extraemos la información completa de cada ítem fuente
-  const details = sourceItems.map((item, index) => {
-    const content = item.content || item;
-    const title = item.title || content.ambitoNucleo || "Actividad " + (index + 1);
+export async function generateGlobalPlanning(sourceItems: unknown[]): Promise<Planning> {
+  const details = (sourceItems as Array<{ content?: { ambitoNucleo?: string; nivel?: string; planes?: Array<{ objective?: string; inicio?: string; desarrollo?: string; cierre?: string }> }; title?: string; ambitoNucleo?: string; nivel?: string; planes?: unknown[]; objective?: string; description?: string }>).map((item, index) => {
+    const content = (item.content || item) as { ambitoNucleo?: string; nivel?: string; planes?: Array<{ objective?: string; inicio?: string; desarrollo?: string; cierre?: string }>; objective?: string; description?: string };
+    const title = (item as { title?: string }).title || content.ambitoNucleo || "Actividad " + (index + 1);
     const nivel = content.nivel || "No especificado";
 
-    // Si es una planificación, extraemos los bloques de planes
     let plansText = "";
     if (content.planes && Array.isArray(content.planes)) {
-      plansText = content.planes.map((p: any) =>
+      plansText = content.planes.map((p) =>
         `OA: ${p.objective}\nInicio: ${p.inicio}\nDesarrollo: ${p.desarrollo}\nCierre: ${p.cierre}`
       ).join('\n---\n');
     } else {
@@ -265,52 +315,58 @@ export async function generateGlobalPlanning(sourceItems: any[]): Promise<Planni
 
   console.log("Generando Plan Integral para", sourceItems.length, "ítems...");
 
-  try {
-    const { data: responseData, error } = await supabase.functions.invoke('generate-content', {
-      body: {
-        model: "gemini-3-flash-preview",
-        prompt: prompt,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            titulo: { type: "STRING" },
-            metodologia: { type: "STRING" },
-            materiales: { type: "ARRAY", items: { type: "STRING" } },
-            nivel: { type: "STRING" },
-            equipo: { type: "STRING" },
-            mes: { type: "STRING" },
-            ambitoNucleo: { type: "STRING" },
-            planes: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  objective: { type: "STRING" },
-                  focoObservacion: { type: "ARRAY", items: { type: "STRING" } },
-                  inicio: { type: "STRING" },
-                  desarrollo: { type: "STRING" },
-                  cierre: { type: "STRING" }
-                },
-                required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
-              }
-            },
-            mediacion: { type: "STRING" }
+  const invokePromise = supabase.functions.invoke('generate-content', {
+    body: {
+      model: DEFAULT_GEMINI_MODEL,
+      prompt: prompt,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          titulo: { type: "STRING" },
+          metodologia: { type: "STRING" },
+          materiales: { type: "ARRAY", items: { type: "STRING" } },
+          nivel: { type: "STRING" },
+          equipo: { type: "STRING" },
+          mes: { type: "STRING" },
+          ambitoNucleo: { type: "STRING" },
+          planes: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                objective: { type: "STRING" },
+                focoObservacion: { type: "ARRAY", items: { type: "STRING" } },
+                inicio: { type: "STRING" },
+                desarrollo: { type: "STRING" },
+                cierre: { type: "STRING" }
+              },
+              required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
+            }
           },
-          required: ["nivel", "ambitoNucleo", "planes", "mediacion"]
-        }
+          mediacion: { type: "STRING" }
+        },
+        required: ["nivel", "ambitoNucleo", "planes", "mediacion"]
       }
-    });
+    }
+  });
 
-    if (error) throw error;
+  try {
+    const invokeResult = await withTimeout(invokePromise, CLIENT_TIMEOUT_MS, "Plan Integral");
+    const { data: responseData, error } = invokeResult as { data: { text?: string } | null, error: unknown };
 
-    const result = parseJSONResponse(responseData.text);
+    if (error) throw await handleAIError(error);
+    if (!responseData?.text) throw new Error("No se recibió contenido para el plan integral.");
+
+    const result = parseJSONResponse(responseData.text) as Planning;
     console.log("Plan Integral generado exitosamente.");
     return result;
-  } catch (error: any) {
-    console.error("Gemini API Error (Global Planning Detailed):", error);
-    if (error.message?.includes('fetch')) throw new Error("Error de red: Gemini no responde para el plan integral.");
-    if (error.message?.includes('JSON')) throw new Error("Error de formato: La respuesta de la IA no fue válida.");
-    throw new Error(`Error en generación: ${error.message}`);
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error("generateGlobalPlanning Error:", err.message);
+
+    if (err.message.includes('fetch')) throw new Error("Error de red: la IA no responde para el plan integral.");
+    if (err.message.includes('JSON')) throw new Error("Error de formato: la respuesta de la IA no fue válida.");
+    throw err;
   }
 }
