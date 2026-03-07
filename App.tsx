@@ -191,6 +191,11 @@ const App: React.FC = () => {
           setUser(null);
           setSavedItems([]);
           setChildren([]);
+          setEvaluations([]);
+          setCurrentAssessment(null);
+          setCurrentPlanning(null);
+          setGlobalPlanningResult(null);
+          setFocusedAssessment(null);
           setView('login');
         }
       } catch (err) {
@@ -293,13 +298,28 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
-      await supabase.auth.signOut();
+      setIsAuthLoading(true);
+      // Primero limpiamos el estado local para respuesta inmediata
+      setUser(null);
+      setSession(null);
+      setSavedItems([]);
+      setChildren([]);
+      setEvaluations([]);
+      resetForm();
+      setView('login');
+      
+      // Luego cerramos sesión en Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
     } catch (err) {
       console.error("Logout error:", err);
+      // Si falla signOut, al menos el usuario ya está en login localmente
+    } finally {
+      setIsAuthLoading(false);
     }
-  };
+  }, []);
 
   const savePlanning = async () => {
     const planToSave = globalPlanningResult || currentPlanning;
