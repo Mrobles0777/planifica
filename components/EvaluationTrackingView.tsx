@@ -382,29 +382,29 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 </div>
                                             </div>
 
-                                            {/* Matrix Table with Diagonal and Vertical Names */}
-                                            <div className="overflow-hidden rounded-[2.5rem] border-2 border-rose-50">
-                                                <table className="w-full border-collapse">
+                                            {/* Matrix Table with Diagonal and Vertical Names - Compact Version */}
+                                            <div className="overflow-hidden rounded-[1.5rem] border border-rose-100">
+                                                <table className="w-full border-collapse table-fixed">
                                                     <thead>
                                                         <tr className="bg-white">
-                                                            <th className="p-0 border border-rose-100 relative h-48 w-[450px]">
+                                                            <th className="p-0 border border-rose-100 relative h-32 w-[30%]">
                                                                 {/* Diagonal Line Cell */}
                                                                 <div className="absolute inset-0 overflow-hidden">
                                                                     <svg className="w-full h-full" preserveAspectRatio="none">
-                                                                        <line x1="0" y1="0" x2="100%" y2="100%" stroke="#ffe4e6" strokeWidth="2" />
+                                                                        <line x1="0" y1="0" x2="100%" y2="100%" stroke="#ffe4e6" strokeWidth="1" />
                                                                     </svg>
                                                                 </div>
-                                                                <div className="absolute top-6 right-10 text-xs font-black text-rose-400 uppercase tracking-widest">Indicadores</div>
-                                                                <div className="absolute bottom-6 left-10 text-xs font-black text-rose-400 uppercase tracking-widest">Nombres</div>
+                                                                <div className="absolute top-2 right-4 text-[9px] font-black text-rose-300 uppercase tracking-widest">Indicadores</div>
+                                                                <div className="absolute bottom-2 left-4 text-[9px] font-black text-rose-300 uppercase tracking-widest">Nombres</div>
                                                             </th>
                                                             {(ev.child_ids || []).map((cid: string, idx: number) => {
                                                                 const childData = (children || []).find(c => c.id === cid);
                                                                 return (
-                                                                    <th key={cid} className="p-0 border border-rose-100 bg-white min-w-[70px] align-bottom">
+                                                                    <th key={cid} className="p-0 border border-rose-100 bg-white min-w-[40px] align-bottom">
                                                                         <div className="flex flex-col items-center">
-                                                                            <div className="w-full py-2 bg-rose-50/50 border-b border-rose-100 text-[11px] font-black text-rose-500 text-center">{idx + 1}</div>
-                                                                            <div className="py-8 px-2 flex items-center justify-center min-h-[160px]">
-                                                                                <span className="text-[14px] font-black text-slate-700 uppercase tracking-tight whitespace-nowrap block" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', letterSpacing: '0.05em' }}>
+                                                                            <div className="w-full py-1 bg-rose-50/30 border-b border-rose-100 text-[9px] font-black text-rose-400 text-center">{idx + 1}</div>
+                                                                            <div className="py-4 px-1 flex items-center justify-center min-h-[100px]">
+                                                                                <span className="text-[11px] font-black text-slate-600 uppercase tracking-tight whitespace-nowrap block" style={{ writingMode: 'vertical-rl', letterSpacing: '0.05em' }}>
                                                                                     {childData ? `${childData.firstName} ${childData.lastName[0]}.` : `Niño ${idx + 1}`}
                                                                                 </span>
                                                                             </div>
@@ -417,19 +417,19 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                     <tbody>
                                                         {(ev.indicators || []).map((ind: any, objIdx: number) => (
                                                             <tr key={objIdx} className="pdf-block">
-                                                                <td className="p-8 border border-rose-100 bg-white">
-                                                                    <div className="flex gap-6 items-center">
-                                                                        <span className="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-md shadow-rose-100">{objIdx + 1}</span>
-                                                                        <span className="text-base font-bold text-slate-700 leading-snug tracking-tight">{ind.text}</span>
+                                                                <td className="p-4 border border-rose-100 bg-white">
+                                                                    <div className="flex gap-3 items-center">
+                                                                        <span className="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">{objIdx + 1}</span>
+                                                                        <span className="text-[12px] font-bold text-slate-700 leading-tight tracking-tight">{ind.text}</span>
                                                                     </div>
                                                                 </td>
                                                                 {(ev.child_ids || []).map((cid: string) => {
                                                                     const isNewFormat = ind.evaluationsByChild !== undefined;
                                                                     const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
                                                                     return (
-                                                                        <td key={cid} className="p-2 border border-rose-100 text-center bg-white h-24">
+                                                                        <td key={cid} className="p-1 border border-rose-100 text-center bg-white h-12">
                                                                             <div className="flex items-center justify-center h-full">
-                                                                                <span className={`w-12 h-12 leading-[48px] rounded-2xl text-[13px] font-black shadow-sm ${
+                                                                                <span className={`w-8 h-8 leading-[32px] rounded-xl text-[10px] font-black shadow-sm ${
                                                                                     val === 'L' ? 'bg-[#f0fdf4] text-[#166534] border border-[#bcf0da]' :
                                                                                     val === 'ML' ? 'bg-[#fffbeb] text-[#92400e] border border-[#fef3c7]' :
                                                                                     val === 'N/O' ? 'bg-[#f8fafb] text-[#475569] border border-[#e2e8f0]' :
