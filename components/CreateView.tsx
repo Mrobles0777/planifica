@@ -57,33 +57,6 @@ const CreateView: React.FC<CreateViewProps> = ({
     openMaterialSearch,
     children
 }) => {
-    const [evaluations, setEvaluations] = React.useState<Record<string, Record<string, string>>>({});
-    const [selectedChildIds, setSelectedChildIds] = React.useState<string[]>([]);
-
-    const toggleChildSelection = (childId: string) => {
-        setSelectedChildIds(prev => 
-            prev.includes(childId) ? prev.filter(id => id !== childId) : [...prev, childId]
-        );
-    };
-
-    const toggleAllChildren = () => {
-        if (selectedChildIds.length === children.length) {
-            setSelectedChildIds([]);
-        } else {
-            setSelectedChildIds(children.map(c => c.id));
-        }
-    };
-
-    const handleEvalChange = (childId: string, objectiveId: string, value: string) => {
-        setEvaluations(prev => ({
-            ...prev,
-            [objectiveId]: {
-                ...(prev[objectiveId] || {}),
-                [childId]: value
-            }
-        }));
-    };
-
     const toggleObjective = (obj: Objective) => {
         if (selectedObjectives.find(o => o.id === obj.id)) {
             setSelectedObjectives(selectedObjectives.filter(o => o.id !== obj.id));
@@ -227,109 +200,10 @@ const CreateView: React.FC<CreateViewProps> = ({
                 </div>
             )}
 
-            {/* Step 4: Child Selection for Evaluation */}
-            {selectedObjectives.length > 0 && children.length > 0 && (
-                <div className="space-y-4 animate-in fade-in">
-                    <div className="flex items-center justify-between ml-4">
-                        <label className="text-[11px] font-black text-violet-500 uppercase tracking-widest">4. Seleccionar Niños/as a Evaluar</label>
-                        <button 
-                            onClick={toggleAllChildren}
-                            className="text-[10px] font-black text-violet-600 hover:underline uppercase tracking-tighter"
-                        >
-                            {selectedChildIds.length === children.length ? 'Deseleccionar Todos' : 'Seleccionar Todos'}
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                        {children.map(child => (
-                            <button
-                                key={child.id}
-                                onClick={() => toggleChildSelection(child.id)}
-                                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${selectedChildIds.includes(child.id) ? 'bg-violet-500 border-violet-400 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-violet-100'}`}
-                            >
-                                <Baby className={`w-6 h-6 ${selectedChildIds.includes(child.id) ? 'text-white' : 'text-slate-200'}`} />
-                                <span className="text-[10px] font-black uppercase truncate w-full text-center">{child.firstName}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Step 5: Evaluation Matrix */}
-            {selectedObjectives.length > 0 && selectedChildIds.length > 0 && (
-                <div className="space-y-4 animate-in fade-in">
-                    <label className="text-[11px] font-black text-rose-500 uppercase block ml-4 tracking-widest">5. Matriz de Evaluación (Referencia Técnica)</label>
-                    <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 overflow-hidden shadow-2xl">
-                        <div className="overflow-x-auto custom-scrollbar">
-                            <table className="w-full border-collapse">
-                                <thead>
-                                    <tr>
-                                        {/* Corner Cell */}
-                                        <th className="p-0 border-b-2 border-r-2 border-slate-200 bg-slate-50 min-w-[300px] relative h-32">
-                                            <div className="absolute top-4 right-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Indicadores</div>
-                                            <div className="absolute bottom-4 left-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Nombres</div>
-                                            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-slate-200/20" style={{ backgroundImage: 'linear-gradient(to top right, transparent calc(50% - 1px), #e2e8f0, transparent calc(50% + 1px))' }}></div>
-                                        </th>
-                                        
-                                        {/* Patient Numbers and Names */}
-                                        {children.filter(c => selectedChildIds.includes(c.id)).map((child, index) => (
-                                            <th key={child.id} className="p-0 border-b-2 border-r border-slate-200 bg-white min-w-[70px]">
-                                                <div className="flex flex-col h-full">
-                                                    {/* Number Row */}
-                                                    <div className="py-2 border-b border-slate-200 bg-slate-50 text-[10px] font-black text-slate-500 text-center">
-                                                        {index + 1}
-                                                    </div>
-                                                    {/* Name Row */}
-                                                    <div className="p-4 flex items-center justify-center bg-white min-h-[140px]">
-                                                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-tighter whitespace-nowrap block" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                                                            {child.firstName} {child.lastName[0]}.
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {selectedObjectives.map((obj, objIdx) => (
-                                        <tr key={obj.id} className="hover:bg-slate-50/30 transition-colors">
-                                            <td className="p-6 border-b border-r-2 border-slate-200 bg-white">
-                                                <div className="flex gap-4 items-start">
-                                                    <span className="text-[10px] font-black bg-slate-800 text-white px-3 py-1 rounded-lg shrink-0 mt-1 shadow-sm">{objIdx + 1}</span>
-                                                    <span className="text-[12px] font-bold text-slate-700 leading-snug">{obj.text}</span>
-                                                </div>
-                                            </td>
-                                            {children.filter(c => selectedChildIds.includes(c.id)).map(child => (
-                                                <td key={child.id} className="p-3 border-b border-r border-slate-100 text-center bg-white">
-                                                    <select
-                                                        value={evaluations[obj.id]?.[child.id] || ''}
-                                                        onChange={(e) => handleEvalChange(child.id, obj.id.toString(), e.target.value)}
-                                                        className={`w-full p-2.5 rounded-xl text-[11px] font-black border-2 transition-all outline-none appearance-none text-center cursor-pointer hover:shadow-md ${
-                                                            evaluations[obj.id]?.[child.id] === 'L' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' :
-                                                            evaluations[obj.id]?.[child.id] === 'ML' ? 'bg-amber-50 border-amber-300 text-amber-700' :
-                                                            evaluations[obj.id]?.[child.id] === 'N/O' ? 'bg-slate-100 border-slate-300 text-slate-600' :
-                                                            'bg-slate-50 border-slate-100 text-slate-400'
-                                                        }`}
-                                                    >
-                                                        <option value="">-</option>
-                                                        {EVAL_MODES.map(mode => (
-                                                            <option key={mode.id} value={mode.id}>{mode.label}</option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Step 6: Date */}
+            {/* Step 4: Date */}
             {selectedObjectives.length > 0 && (
                 <div className="space-y-4 animate-in fade-in">
-                    <label className="text-[11px] font-black text-amber-500 uppercase block ml-4 tracking-widest">6. Fecha Estimada</label>
+                    <label className="text-[11px] font-black text-amber-500 uppercase block ml-4 tracking-widest">4. Fecha Estimada</label>
                     <div className="relative">
                         <CalendarDays className="absolute left-6 top-1/2 -translate-y-1/2 text-amber-400 w-6 h-6" />
                         <input
@@ -342,10 +216,10 @@ const CreateView: React.FC<CreateViewProps> = ({
                 </div>
             )}
 
-            {/* Step 7: Methodology */}
+            {/* Step 5: Methodology */}
             {selectedObjectives.length > 0 && (
                 <div className="space-y-4 animate-in fade-in">
-                    <label className="text-[11px] font-black text-indigo-500 uppercase block ml-4 tracking-widest">7. Enfoque Metodológico</label>
+                    <label className="text-[11px] font-black text-indigo-500 uppercase block ml-4 tracking-widest">5. Enfoque Metodológico</label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {[
                             { id: Methodology.STANDARD, label: 'Estándar', icon: <Star className="w-6 h-6" />, color: 'sky' },
