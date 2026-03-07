@@ -364,99 +364,121 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                 </div>
 
                                 <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '297mm', pointerEvents: 'none' }} aria-hidden="true">
-                                    <div id={`pdf-matrix-${ev.id}`} className="bg-white text-slate-800 font-sans p-12">
-                                        {/* Header Matriz Premium */}
-                                        <div className="flex justify-between items-end mb-12 border-b-8 border-rose-500 pb-8">
-                                            <div>
-                                                <h1 className="text-6xl font-black text-slate-900 tracking-tighter italic">Planifica</h1>
-                                                <p className="text-rose-600 font-black uppercase tracking-[0.4em] text-sm mt-2">Matriz Técnica de Evaluación Grupal</p>
-                                            </div>
-                                            <div className="text-right space-y-2">
-                                                <p className="text-2xl font-black text-slate-800">{ev.establishment || "Institución Educacional"}</p>
-                                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-                                                    NIVEL: {ev.level} | RBD: {ev.rbd || "---"} | AÑO: {ev.year || "2026"}
-                                                </p>
-                                                <p className="text-rose-500 font-black text-lg">Sesión: {new Date(ev.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Matrix Table */}
-                                        <table className="w-full border-collapse border-4 border-slate-100">
-                                            <thead>
-                                                <tr>
-                                                    <th className="p-8 border-4 border-slate-100 bg-slate-50/50 min-w-[300px] relative h-40">
-                                                        <div className="absolute top-4 right-8 text-xs font-black text-slate-400 uppercase tracking-widest">Indicadores de Evaluación</div>
-                                                        <div className="absolute bottom-4 left-8 text-xs font-black text-slate-400 uppercase tracking-widest">Nómina de Alumnos</div>
-                                                        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top right, transparent calc(50% - 1px), #f1f5f9, transparent calc(50% + 1px))' }}></div>
-                                                    </th>
-                                                    {(ev.child_ids || []).map((cid: string, idx: number) => {
-                                                        const childData = (children || []).find(c => c.id === cid);
-                                                        return (
-                                                            <th key={cid} className="p-0 border-4 border-slate-100 bg-white min-w-[60px]">
-                                                                <div className="flex flex-col h-full">
-                                                                    <div className="py-2 border-b-2 border-slate-50 bg-rose-50 text-xs font-black text-rose-500 text-center">{idx + 1}</div>
-                                                                    <div className="p-4 flex items-center justify-center min-h-[180px]">
-                                                                        <span className="text-[13px] font-black text-slate-800 uppercase tracking-tighter whitespace-nowrap block" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                                                                            {childData ? `${childData.firstName} ${childData.lastName[0]}.` : `Niño ${idx + 1}`}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </th>
-                                                        );
-                                                    })}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {(ev.indicators || []).map((ind: any, objIdx: number) => (
-                                                    <tr key={objIdx} className="pdf-block">
-                                                        <td className="p-6 border-4 border-slate-100 bg-white">
-                                                            <div className="flex gap-4 items-start">
-                                                                <span className="text-xs font-black bg-slate-900 text-white px-3 py-1 rounded-xl shadow-sm shrink-0">{objIdx + 1}</span>
-                                                                <span className="text-sm font-bold text-slate-800 leading-snug">{ind.text}</span>
-                                                            </div>
-                                                        </td>
-                                                        {(ev.child_ids || []).map((cid: string) => {
-                                                            const isNewFormat = ind.evaluationsByChild !== undefined;
-                                                            const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
-                                                            return (
-                                                                <td key={cid} className="p-2 border-4 border-slate-100 text-center bg-white">
-                                                                    <span className={`inline-block w-10 h-10 leading-10 rounded-2xl text-xs font-black shadow-sm ${
-                                                                        val === 'L' ? 'bg-emerald-500 text-white' :
-                                                                        val === 'ML' ? 'bg-amber-500 text-white' :
-                                                                        val === 'N/O' ? 'bg-slate-500 text-white' :
-                                                                        'text-slate-200 border-2 border-slate-50'
-                                                                    }`}>
-                                                                        {val || '-'}
-                                                                    </span>
-                                                                </td>
-                                                            );
-                                                        })}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-
-                                        {/* Footer Matrix */}
-                                        <div className="mt-16 flex justify-between items-start">
-                                            <div className="space-y-4">
-                                                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">CONVENCIONES DE EVALUACIÓN</p>
-                                                    <div className="flex gap-10">
-                                                        <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-lg bg-emerald-500"></span><span className="text-xs font-bold text-slate-600">L: Logrado</span></div>
-                                                        <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-lg bg-amber-500"></span><span className="text-xs font-bold text-slate-600">ML: Mediante Logrado</span></div>
-                                                        <div className="flex items-center gap-3"><span className="w-4 h-4 rounded-lg bg-slate-500"></span><span className="text-xs font-bold text-slate-600">N/O: No Observado</span></div>
+                                    <div id={`pdf-matrix-${ev.id}`} className="bg-[#fff1f2] p-12 min-h-[210mm]">
+                                        <div className="bg-white rounded-[4rem] shadow-2xl p-12 border-4 border-rose-100/50">
+                                            {/* Header Matriz Premium V2 (Exact Match) */}
+                                            <div className="mb-12">
+                                                <h1 className="text-xl font-black text-rose-500 uppercase tracking-[0.3em] mb-8">Matriz General de la Sesión</h1>
+                                                
+                                                <div className="flex items-center justify-between mb-4 border-b border-rose-100 pb-4">
+                                                    <div className="space-y-1">
+                                                        <p className="text-2xl font-black text-slate-800 tracking-tighter">{ev.establishment || "Institución Educacional"}</p>
+                                                        <p className="text-sm font-bold text-slate-400">RBD: {ev.rbd || "---"} | {ev.level} | {ev.year}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-rose-500 font-black text-xl">{new Date(ev.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1">Fecha de Emisión</p>
                                                     </div>
                                                 </div>
-                                                <p className="text-[10px] text-slate-300 font-bold pl-4 uppercase tracking-tighter">Planifica AI - Sistema de Gestión Curricular Avanzado</p>
                                             </div>
-                                            <div className="flex gap-24 pt-10">
-                                                <div className="text-center w-56">
-                                                    <div className="border-b-4 border-slate-100 mb-4 h-16 w-full"></div>
-                                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Firma Educadora</p>
+
+                                            {/* Matrix Table with Diagonal and Vertical Names */}
+                                            <div className="overflow-hidden rounded-[2.5rem] border-2 border-rose-50">
+                                                <table className="w-full border-collapse">
+                                                    <thead>
+                                                        <tr className="bg-white">
+                                                            <th className="p-0 border border-rose-100 relative h-48 w-[450px]">
+                                                                {/* Diagonal Line Cell */}
+                                                                <div className="absolute inset-0 overflow-hidden">
+                                                                    <svg className="w-full h-full" preserveAspectRatio="none">
+                                                                        <line x1="0" y1="0" x2="100%" y2="100%" stroke="#ffe4e6" strokeWidth="2" />
+                                                                    </svg>
+                                                                </div>
+                                                                <div className="absolute top-6 right-10 text-xs font-black text-rose-400 uppercase tracking-widest">Indicadores</div>
+                                                                <div className="absolute bottom-6 left-10 text-xs font-black text-rose-400 uppercase tracking-widest">Nombres</div>
+                                                            </th>
+                                                            {(ev.child_ids || []).map((cid: string, idx: number) => {
+                                                                const childData = (children || []).find(c => c.id === cid);
+                                                                return (
+                                                                    <th key={cid} className="p-0 border border-rose-100 bg-white min-w-[70px] align-bottom">
+                                                                        <div className="flex flex-col items-center">
+                                                                            <div className="w-full py-2 bg-rose-50/50 border-b border-rose-100 text-[11px] font-black text-rose-500 text-center">{idx + 1}</div>
+                                                                            <div className="py-8 px-2 flex items-center justify-center min-h-[160px]">
+                                                                                <span className="text-[14px] font-black text-slate-700 uppercase tracking-tight whitespace-nowrap block" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', letterSpacing: '0.05em' }}>
+                                                                                    {childData ? `${childData.firstName} ${childData.lastName[0]}.` : `Niño ${idx + 1}`}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </th>
+                                                                );
+                                                            })}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {(ev.indicators || []).map((ind: any, objIdx: number) => (
+                                                            <tr key={objIdx} className="pdf-block">
+                                                                <td className="p-8 border border-rose-100 bg-white">
+                                                                    <div className="flex gap-6 items-center">
+                                                                        <span className="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-md shadow-rose-100">{objIdx + 1}</span>
+                                                                        <span className="text-base font-bold text-slate-700 leading-snug tracking-tight">{ind.text}</span>
+                                                                    </div>
+                                                                </td>
+                                                                {(ev.child_ids || []).map((cid: string) => {
+                                                                    const isNewFormat = ind.evaluationsByChild !== undefined;
+                                                                    const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
+                                                                    return (
+                                                                        <td key={cid} className="p-2 border border-rose-100 text-center bg-white h-24">
+                                                                            <div className="flex items-center justify-center h-full">
+                                                                                <span className={`w-12 h-12 leading-[48px] rounded-2xl text-[13px] font-black shadow-sm ${
+                                                                                    val === 'L' ? 'bg-[#f0fdf4] text-[#166534] border border-[#bcf0da]' :
+                                                                                    val === 'ML' ? 'bg-[#fffbeb] text-[#92400e] border border-[#fef3c7]' :
+                                                                                    val === 'N/O' ? 'bg-[#f8fafb] text-[#475569] border border-[#e2e8f0]' :
+                                                                                    'bg-slate-50 text-slate-200'
+                                                                                }`}>
+                                                                                    {val || '-'}
+                                                                                </span>
+                                                                            </div>
+                                                                        </td>
+                                                                    );
+                                                                })}
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {/* Footer with Signatures and Legend */}
+                                            <div className="mt-16 flex justify-between items-start px-4">
+                                                <div className="space-y-6">
+                                                    <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Simbología de Evaluación</p>
+                                                        <div className="flex gap-10">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="w-5 h-5 rounded-lg bg-[#f0fdf4] border border-[#bcf0da] flex items-center justify-center text-[9px] font-black text-[#166534]">L</span>
+                                                                <span className="text-xs font-bold text-slate-600">Logrado</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="w-5 h-5 rounded-lg bg-[#fffbeb] border border-[#fef3c7] flex items-center justify-center text-[9px] font-black text-[#92400e]">ML</span>
+                                                                <span className="text-xs font-bold text-slate-600">Mediante Logrado</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="w-5 h-5 rounded-lg bg-[#f8fafb] border border-[#e2e8f0] flex items-center justify-center text-[9px] font-black text-[#475569]">N/O</span>
+                                                                <span className="text-xs font-bold text-slate-600">No Observado</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-[10px] text-slate-300 font-bold uppercase tracking-tighter italic">Planifica AI - Reporte Oficial de Seguimiento Curricular</p>
                                                 </div>
-                                                <div className="text-center w-56">
-                                                    <div className="border-b-4 border-slate-100 mb-4 h-16 w-full"></div>
-                                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Timbre Oficial</p>
+                                                
+                                                <div className="flex gap-20 pt-10">
+                                                    <div className="text-center w-64">
+                                                        <div className="border-b-[3px] border-slate-100 mb-4 h-20 w-full"></div>
+                                                        <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Firma Educadora</p>
+                                                    </div>
+                                                    <div className="text-center w-64">
+                                                        <div className="border-b-[3px] border-slate-100 mb-4 h-20 w-full"></div>
+                                                        <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Timbre Institución</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
