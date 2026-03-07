@@ -58,8 +58,8 @@ const App: React.FC = () => {
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [focusedAssessment, setFocusedAssessment] = useState<GeneratedAssessment | null>(null);
 
-  const fetchSavedItems = useCallback(async () => {
-    const userId = session?.user?.id;
+  const fetchSavedItems = useCallback(async (forcedUserId?: string) => {
+    const userId = forcedUserId || session?.user?.id;
     if (!userId) return;
 
     setIsSyncing(true);
@@ -82,8 +82,8 @@ const App: React.FC = () => {
     }
   }, [session?.user?.id]);
 
-  const fetchChildren = useCallback(async () => {
-    const userId = session?.user?.id;
+  const fetchChildren = useCallback(async (forcedUserId?: string) => {
+    const userId = forcedUserId || session?.user?.id;
     if (!userId) return;
 
     try {
@@ -111,8 +111,8 @@ const App: React.FC = () => {
     }
   }, [session?.user?.id]);
 
-  const fetchEvaluations = useCallback(async () => {
-    const userId = session?.user?.id;
+  const fetchEvaluations = useCallback(async (forcedUserId?: string) => {
+    const userId = forcedUserId || session?.user?.id;
     if (!userId) return;
 
     try {
@@ -143,14 +143,15 @@ const App: React.FC = () => {
       } else {
         setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
       }
-      fetchSavedItems();
-      fetchChildren();
-      fetchEvaluations();
+      // Pasamos el ID directamente para evitar depender de que el estado "session" se haya flusheado
+      fetchSavedItems(userId);
+      fetchChildren(userId);
+      fetchEvaluations(userId);
     } catch (err: any) {
       setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
-      fetchSavedItems();
-      fetchChildren();
-      fetchEvaluations();
+      fetchSavedItems(userId);
+      fetchChildren(userId);
+      fetchEvaluations(userId);
     }
   }, [fetchSavedItems, fetchChildren, fetchEvaluations]);
 
@@ -182,11 +183,13 @@ const App: React.FC = () => {
         }
 
         if (session) {
-          await fetchUserData(session.user.id);
+          // Cambiamos de vista inmediatamente si estamos en login
           setView(currentView => {
             if (currentView === 'login' || currentView === 'password-reset') return 'home';
             return currentView;
           });
+          // Cargamos los datos en paralelo
+          await fetchUserData(session.user.id);
         } else {
           setUser(null);
           setSavedItems([]);
@@ -286,18 +289,23 @@ const App: React.FC = () => {
     setErrorMessage(null);
     setIsAuthLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin
         }
       });
       if (error) throw error;
+      
+      // Si la librería no redirige automáticamente por alguna razón de entorno, forzamos la navegación
+      if (data?.url) {
+        window.location.assign(data.url);
+      }
     } catch (err: any) {
       setErrorMessage(err.message);
-    } finally {
       setIsAuthLoading(false);
     }
+    // No usamos finally para que el spinner persista durante el proceso de redirección
   };
 
   const handleLogout = useCallback(async () => {
