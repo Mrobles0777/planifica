@@ -123,7 +123,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                     </div>
 
                                     <div className="bg-slate-50 p-6 rounded-3xl mb-10 flex gap-10">
-                                        <div>
+                                        <div className="flex-1">
                                             <p className="text-[10px] font-black text-slate-400 uppercase mb-1">NIÑO/A</p>
                                             <p className="font-bold text-lg">{child.firstName} {child.lastName}</p>
                                         </div>
@@ -137,24 +137,47 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                         </div>
                                     </div>
 
-                                    <table className="w-full border-collapse">
+                                    <div className="mb-6 flex items-center gap-3">
+                                        <div className="p-2 bg-rose-100 rounded-xl">
+                                            <div className="w-4 h-4 rounded-full bg-rose-500 shadow-sm"></div>
+                                        </div>
+                                        <h3 className="text-lg font-black text-slate-700 tracking-tight">Eje Motricidad y Autonomía</h3>
+                                    </div>
+
+                                    <table className="w-full border-separate border-spacing-y-2">
                                         <thead>
                                             <tr>
-                                                <th className="text-left py-4 px-2 border-b-2 border-slate-200 text-xs font-black text-slate-400 uppercase">Indicador de Aprendizaje</th>
-                                                <th className="text-center py-4 px-2 border-b-2 border-slate-200 text-xs font-black text-slate-400 uppercase">M1</th>
-                                                <th className="text-center py-4 px-2 border-b-2 border-slate-200 text-xs font-black text-slate-400 uppercase">M2</th>
-                                                <th className="text-center py-4 px-2 border-b-2 border-slate-200 text-xs font-black text-slate-400 uppercase">M3</th>
-                                                <th className="text-center py-4 px-2 border-b-2 border-slate-200 text-xs font-black text-slate-400 uppercase">Final</th>
+                                                <th className="text-left py-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Indicador</th>
+                                                <th className="text-center py-4 px-2 text-[10px] font-black text-slate-400 uppercase">M1</th>
+                                                <th className="text-center py-4 px-2 text-[10px] font-black text-slate-400 uppercase">M2</th>
+                                                <th className="text-center py-4 px-2 text-[10px] font-black text-slate-400 uppercase">M3</th>
+                                                <th className="text-center py-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Final</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {ev.indicators.map((ind: any, i: number) => (
-                                                <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-                                                    <td className="py-4 px-2 text-xs font-bold border-b border-slate-100">{ind.text}</td>
-                                                    <td className="text-center py-4 px-2 text-[10px] font-black border-b border-slate-100">{ind.evaluations[0] || '-'}</td>
-                                                    <td className="text-center py-4 px-2 text-[10px] font-black border-b border-slate-100">{ind.evaluations[1] || '-'}</td>
-                                                    <td className="text-center py-4 px-2 text-[10px] font-black border-b border-slate-100">{ind.evaluations[2] || '-'}</td>
-                                                    <td className="text-center py-4 px-2 text-[10px] font-black border-b border-slate-100 bg-emerald-50 text-emerald-700">{ind.finalAchievement === 'None' ? '-' : ind.finalAchievement}</td>
+                                                <tr key={i}>
+                                                    <td className="py-5 px-6 bg-slate-50/50 rounded-l-2xl text-xs font-bold text-slate-700 leading-relaxed border-y border-l border-slate-100">{ind.text}</td>
+                                                    {[0, 1, 2].map(m => (
+                                                        <td key={m} className="py-5 px-2 bg-slate-50/50 text-center border-y border-slate-100">
+                                                            {ind.evaluations[m] ? (
+                                                                <span className="inline-block px-3 py-1 bg-emerald-500 text-white rounded-lg text-[9px] font-black shadow-sm">
+                                                                    {ind.evaluations[m]}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-slate-200">-</span>
+                                                            )}
+                                                        </td>
+                                                    ))}
+                                                    <td className="py-5 px-6 bg-white rounded-r-2xl border-y border-r border-slate-200">
+                                                        <div className={`px-4 py-2 rounded-xl text-center text-[9px] font-black shadow-sm ${
+                                                            ind.finalAchievement !== 'None' 
+                                                                ? 'bg-sky-500 text-white border-none' 
+                                                                : 'bg-white text-slate-300 border border-slate-100'
+                                                        }`}>
+                                                            {ind.finalAchievement === 'None' ? 'SIN EVALUAR' : ind.finalAchievement.toUpperCase()}
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
