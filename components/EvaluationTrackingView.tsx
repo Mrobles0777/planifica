@@ -382,12 +382,18 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 </div>
                                             </div>
 
-                                            {/* Matrix Table with Diagonal and Vertical Names - Compact Version */}
-                                            <div className="overflow-hidden rounded-[1.5rem] border border-rose-100">
-                                                <table className="w-full border-collapse table-fixed">
+                                            {/* Matrix Table with Diagonal and Vertical Names - Fixed Alignment Version */}
+                                            <div className="overflow-hidden rounded-[1.5rem] border border-rose-100 bg-white">
+                                                <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+                                                    <colgroup>
+                                                        <col style={{ width: '35%' }} />
+                                                        {(ev.child_ids || []).map((cid: string) => (
+                                                            <col key={cid} style={{ width: `${65 / Math.max(1, (ev.child_ids || []).length)}%` }} />
+                                                        ))}
+                                                    </colgroup>
                                                     <thead>
                                                         <tr className="bg-white">
-                                                            <th className="p-0 border border-rose-100 relative h-32 w-[30%]">
+                                                            <th className="p-0 border border-rose-100 relative h-32">
                                                                 {/* Diagonal Line Cell */}
                                                                 <div className="absolute inset-0 overflow-hidden">
                                                                     <svg className="w-full h-full" preserveAspectRatio="none">
@@ -400,14 +406,17 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                             {(ev.child_ids || []).map((cid: string, idx: number) => {
                                                                 const childData = (children || []).find(c => c.id === cid);
                                                                 return (
-                                                                    <th key={cid} className="p-0 border border-rose-100 bg-white min-w-[40px] align-bottom">
-                                                                        <div className="flex flex-col items-center">
-                                                                            <div className="w-full py-1 bg-rose-50/30 border-b border-rose-100 text-[9px] font-black text-rose-400 text-center">{idx + 1}</div>
-                                                                            <div className="py-4 px-1 flex items-center justify-center min-h-[100px]">
-                                                                                <span className="text-[11px] font-black text-slate-600 uppercase tracking-tight whitespace-nowrap block" style={{ writingMode: 'vertical-rl', letterSpacing: '0.05em' }}>
-                                                                                    {childData ? `${childData.firstName} ${childData.lastName[0]}.` : `Niño ${idx + 1}`}
-                                                                                </span>
-                                                                            </div>
+                                                                    <th key={cid} className="p-0 border border-rose-100 bg-white min-w-[40px] align-bottom relative h-32">
+                                                                        <div className="absolute top-0 inset-x-0 py-1 bg-rose-50/30 border-b border-rose-100 text-[9px] font-black text-rose-400 text-center">{idx + 1}</div>
+                                                                        <div className="h-24 w-full flex items-center justify-center overflow-hidden">
+                                                                            <span className="text-[11px] font-black text-slate-600 uppercase tracking-tight whitespace-nowrap inline-block" 
+                                                                                  style={{ 
+                                                                                      transform: 'rotate(-90deg)',
+                                                                                      width: '100px',
+                                                                                      textAlign: 'center'
+                                                                                  }}>
+                                                                                {childData ? `${childData.firstName} ${childData.lastName[0]}.` : `Niño ${idx + 1}`}
+                                                                            </span>
                                                                         </div>
                                                                     </th>
                                                                 );
@@ -429,7 +438,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                     return (
                                                                         <td key={cid} className="p-1 border border-rose-100 text-center bg-white h-12">
                                                                             <div className="flex items-center justify-center h-full">
-                                                                                <span className={`w-8 h-8 leading-[32px] rounded-xl text-[10px] font-black shadow-sm ${
+                                                                                <span className={`w-7 h-7 leading-[28px] rounded-lg text-[9px] font-black shadow-sm ${
                                                                                     val === 'L' ? 'bg-[#f0fdf4] text-[#166534] border border-[#bcf0da]' :
                                                                                     val === 'ML' ? 'bg-[#fffbeb] text-[#92400e] border border-[#fef3c7]' :
                                                                                     val === 'N/O' ? 'bg-[#f8fafb] text-[#475569] border border-[#e2e8f0]' :
