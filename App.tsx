@@ -657,7 +657,7 @@ const App: React.FC = () => {
         )}
 
         {view === 'evaluations' && (
-          <EvaluationsView setView={handleViewChange} children={children} />
+          <EvaluationsView setView={handleViewChange} children={children} session={session} />
         )}
 
         {view === 'children-list' && (

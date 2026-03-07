@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Target, ArrowLeft, Save, UserPlus, Baby, GraduationCap, Calendar, Building2, Hash, Sparkles } from 'lucide-react';
 import { Child, EvaluationSession, EvaluationIndicator, AchievementLevel } from '../types';
+import { supabase } from '../supabaseClient';
 
 interface EvaluationsViewProps {
     setView: (view: any) => void;
     children: Child[];
+    session: any;
 }
 
 const DEFAULT_INDICATORS: string[] = [
@@ -15,7 +17,8 @@ const DEFAULT_INDICATORS: string[] = [
     "Expresa sus necesidades y emociones de forma clara."
 ];
 
-const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children }) => {
+const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, session }) => {
+    const [isSaving, setIsSaving] = useState(false);
     const [sessionData, setSessionData] = useState<Partial<EvaluationSession>>({
         establishment: '',
         rbd: '',
@@ -73,9 +76,34 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children }) 
         }));
     };
 
-    const handleSave = () => {
-        console.log("Saving Evaluation Session:", sessionData);
-        alert("¡Datos listos para procesar! Revisa la consola.");
+    const handleSave = async () => {
+        if (!session?.user?.id) return;
+        if ((sessionData.childIds?.length || 0) === 0) {
+            alert("Selecciona al menos un niño/a para evaluar.");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const { error } = await supabase.from('evaluations').insert({
+                user_id: session.user.id,
+                establishment: sessionData.establishment,
+                rbd: sessionData.rbd,
+                level: sessionData.level,
+                year: sessionData.year,
+                child_ids: sessionData.childIds,
+                indicators: sessionData.indicators
+            });
+
+            if (error) throw error;
+            alert("¡Evaluación guardada exitosamente!");
+            setView('home');
+        } catch (err: any) {
+            console.error("Error saving evaluation:", err);
+            alert("No se pudo guardar la evaluación. Revisa la conexión.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -252,10 +280,15 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children }) 
                 <div className="flex justify-center pt-8">
                     <button
                         onClick={handleSave}
-                        className="flex items-center gap-3 bg-rose-500 hover:bg-rose-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-rose-200 transition-all active:scale-95 group"
+                        disabled={isSaving}
+                        className="flex items-center gap-3 bg-rose-500 hover:bg-rose-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-rose-200 transition-all active:scale-95 group disabled:opacity-50"
                     >
-                        <Save className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-                        Guardar Evaluaciones
+                        {isSaving ? (
+                            <Sparkles className="w-6 h-6 animate-spin" />
+                        ) : (
+                            <Save className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                        )}
+                        {isSaving ? 'Guardando...' : 'Guardar Evaluaciones'}
                     </button>
                 </div>
             </div>
