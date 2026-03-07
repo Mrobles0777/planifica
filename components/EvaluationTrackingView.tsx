@@ -23,7 +23,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
     const [viewMode, setViewMode] = useState<Record<string, 'individual' | 'general'>>({});
     const [selectedDashboardAmbito, setSelectedDashboardAmbito] = useState<string>('Desarrollo Personal y Social');
 
-    const childEvaluations = child 
+    const childEvaluations = child?.id 
         ? (evaluations || []).filter(ev => ev.child_ids?.includes(child.id))
         : (evaluations || []);
     const ambitos = Array.from(new Set(CURRICULUM_DATA.map(n => n.ambito)));
@@ -59,7 +59,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                     }
 
                     const evalsByChild = ind.evaluationsByChild || {};
-                    const valuesToProcess = child ? [evalsByChild[child.id]] : Object.values(evalsByChild);
+                    const valuesToProcess = child?.id ? [evalsByChild[child.id]] : Object.values(evalsByChild);
 
                     valuesToProcess.forEach((val: any) => {
                         if (!val) return;
@@ -218,7 +218,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                     <div className="space-y-3">
                                                         {(ev.indicators || []).map((ind: any, i: number) => {
                                                             let result = '-';
-                                                            if (child) {
+                                                            if (child?.id) {
                                                                 result = ind.evaluationsByChild?.[child.id] || ind.finalAchievement;
                                                             } else {
                                                                 // Modo general: mostrar tendencia o mayoría? 
@@ -340,7 +340,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                             </div>
                                             <div className="space-y-6">
                                                 {(ev.indicators || []).map((ind: any, i: number) => {
-                                                    const result = isNewFormat ? ind.evaluationsByChild?.[child.id] : ind.finalAchievement;
+                                                    const result = child?.id ? (ind.evaluationsByChild?.[child.id] || ind.finalAchievement) : 'CONSOLIDADO';
                                                     const color = result === 'L' ? '#10b981' : result === 'ML' ? '#f59e0b' : result === 'N/O' ? '#ef4444' : '#64748b';
                                                     return (
                                                         <div key={i} className="p-8 border-2 border-slate-100 rounded-[3rem] shadow-sm flex items-center gap-8 pdf-block">
@@ -349,7 +349,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                 <div className="flex justify-between items-center mb-4">
                                                                     <span className="text-xs font-black uppercase tracking-widest" style={{ color: color }}>Indicador {i + 1}</span>
                                                                     <span className="px-5 py-2 rounded-xl text-[10px] font-black text-white shadow-sm" style={{ background: color }}>
-                                                                        {child ? (ind.evaluationsByChild?.[child.id] || ind.finalAchievement || 'PENDIENTE') : 'CONSOLIDADO'}
+                                                                        {child?.id ? (ind.evaluationsByChild?.[child.id] || ind.finalAchievement || 'PENDIENTE') : 'CONSOLIDADO'}
                                                                     </span>
                                                                 </div>
                                                                 <p className="text-xl font-bold text-slate-800 leading-tight">{ind.text}</p>
@@ -678,7 +678,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                         <div className="space-y-4">
                                             {(ev.indicators || []).map((ind: any, i: number) => {
                                                 let res = '-';
-                                                if (child) {
+                                                if (child?.id) {
                                                     res = ind.evaluationsByChild?.[child.id] || ind.finalAchievement;
                                                 } else {
                                                     const v = Object.values(ind.evaluationsByChild || {});

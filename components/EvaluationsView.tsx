@@ -258,7 +258,10 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {viewMode === 'tracking' && (
                             <button
-                                onClick={() => setIsGeneralTracking(true)}
+                                onClick={() => {
+                                    setIsGeneralTracking(true);
+                                    setTrackingChild(null);
+                                }}
                                 className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${
                                     isGeneralTracking
                                         ? 'bg-slate-900 border-slate-800 text-white shadow-lg'
@@ -277,6 +280,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                                         toggleChildSelection(child.id);
                                     } else {
                                         setTrackingChild(child);
+                                        setIsGeneralTracking(false);
                                     }
                                 }}
                                 className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${
