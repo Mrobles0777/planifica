@@ -134,6 +134,8 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                 indicators: selectedObjectives.map(obj => ({
                     id: obj.id,
                     text: obj.text,
+                    ambito: selectedNucleo?.ambito,
+                    nucleo: selectedNucleo?.name,
                     evaluationsByChild: evalMatrix[obj.id] || {}
                 }))
             });

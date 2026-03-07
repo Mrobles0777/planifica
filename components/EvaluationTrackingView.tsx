@@ -33,26 +33,36 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
         evaluationsToProcess.forEach(ev => {
             if (!ev.indicators) return;
             ev.indicators.forEach((ind: any) => {
-                const nucleoData = CURRICULUM_DATA.find(n => 
-                    Object.values(n.objectives).some(objs => objs.some(o => o.id === ind.id))
-                );
+                // Priorizar metadatos guardados (Solución a colisión de IDs)
+                let ambito = ind.ambito;
+                let nucleoName = ind.nucleo;
 
-                if (nucleoData) {
-                    const ambito = nucleoData.ambito || 'Otros';
+                // Fallback para registros antiguos (búsqueda por ID)
+                if (!ambito || !nucleoName) {
+                    const nucleoData = CURRICULUM_DATA.find(n => 
+                        Object.values(n.objectives).some(objs => objs.some(o => o.id === ind.id))
+                    );
+                    if (nucleoData) {
+                        ambito = nucleoData.ambito || 'Otros';
+                        nucleoName = nucleoData.name;
+                    }
+                }
+
+                if (ambito && nucleoName) {
                     if (!ambitosMap[ambito]) {
                         ambitosMap[ambito] = { total: 0, L: 0, ML: 0, 'N/O': 0, nucleos: {} };
                     }
-                    if (!ambitosMap[ambito].nucleos[nucleoData.name]) {
-                        ambitosMap[ambito].nucleos[nucleoData.name] = { total: 0, L: 0, ML: 0, 'N/O': 0 };
+                    if (!ambitosMap[ambito].nucleos[nucleoName]) {
+                        ambitosMap[ambito].nucleos[nucleoName] = { total: 0, L: 0, ML: 0, 'N/O': 0 };
                     }
 
                     const evalsByChild = ind.evaluationsByChild || {};
                     Object.values(evalsByChild).forEach((val: any) => {
                         ambitosMap[ambito].total++;
-                        ambitosMap[ambito].nucleos[nucleoData.name].total++;
-                        if (val === 'L') { ambitosMap[ambito].L++; ambitosMap[ambito].nucleos[nucleoData.name].L++; }
-                        else if (val === 'ML') { ambitosMap[ambito].ML++; ambitosMap[ambito].nucleos[nucleoData.name].ML++; }
-                        else if (val === 'N/O') { ambitosMap[ambito]['N/O']++; ambitosMap[ambito].nucleos[nucleoData.name]['N/O']++; }
+                        ambitosMap[ambito].nucleos[nucleoName].total++;
+                        if (val === 'L') { ambitosMap[ambito].L++; ambitosMap[ambito].nucleos[nucleoName].L++; }
+                        else if (val === 'ML') { ambitosMap[ambito].ML++; ambitosMap[ambito].nucleos[nucleoName].ML++; }
+                        else if (val === 'N/O') { ambitosMap[ambito]['N/O']++; ambitosMap[ambito].nucleos[nucleoName]['N/O']++; }
                     });
                 }
             });
