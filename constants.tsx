@@ -301,7 +301,10 @@ export const CURRICULUM_DATA: Nucleo[] = [
 export const COLORS = {
   primary: '#6366f1',
   secondary: '#ec4899',
-  accent: '#10b981',
-  background: '#f8fafc',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#f43f5e',
+  info: '#0ea5e9',
+  background: '#fffdf5',
   card: '#ffffff'
 };

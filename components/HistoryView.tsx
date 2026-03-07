@@ -38,9 +38,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                 <button
                     onClick={handleGenerateGlobalPlanning}
                     disabled={isGeneratingGlobal}
-                    className="w-full flex items-center justify-center gap-4 bg-slate-900 text-white p-8 rounded-[2.5rem] font-black active:scale-95 text-sm md:text-base uppercase tracking-widest shadow-xl transition-all border-b-8 border-yellow-400 disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-4 bg-slate-900 text-white p-8 rounded-vibe font-black active:scale-95 text-sm md:text-base uppercase tracking-widest shadow-xl transition-all border-b-8 border-warning-400 disabled:opacity-50"
                 >
-                    {isGeneratingGlobal ? <Loader2 className="animate-spin w-6 h-6" /> : <Combine className="w-6 h-6 text-yellow-400" />}
+                    {isGeneratingGlobal ? <Loader2 className="animate-spin w-6 h-6" /> : <Combine className="w-6 h-6 text-warning" />}
                     Generar Plan Integrado
                 </button>
             )}
@@ -52,10 +52,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {planningItems.map((item: any) => (
-                        <div key={item.id} className="bg-white p-8 rounded-[2.5rem] shadow-xl border-2 border-slate-50 space-y-6 hover:border-amber-100 transition-colors group">
+                        <div key={item.id} className="bg-white p-8 rounded-vibe shadow-xl border-2 border-slate-50 space-y-6 hover:border-baul-100 transition-colors group">
                             <div className="flex justify-between items-start">
                                 <div className="space-y-2">
-                                    <span className="text-[10px] font-black px-4 py-1.5 bg-amber-50 text-amber-600 rounded-full uppercase tracking-wider">
+                                    <span className="text-[10px] font-black px-4 py-1.5 bg-baul-50 text-baul-600 rounded-full uppercase tracking-wider">
                                         {item.content.nivel || 'Nivel'}
                                     </span>
                                     <h4 className="font-black text-slate-800 text-xl leading-tight">{item.title}</h4>
@@ -63,7 +63,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => handleQuickExport(item)}
-                                        className="p-3 text-sky-500 bg-sky-50 rounded-full hover:bg-sky-100 transition-colors"
+                                        className="p-3 text-info bg-info-50 rounded-full hover:bg-info-100 transition-colors"
                                         title="Exportar PDF"
                                     >
                                         <Download className="w-5 h-5" />
@@ -71,7 +71,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                                     <button
                                         onClick={(e) => deleteItem(e, item.id)}
                                         disabled={isDeleting === item.id}
-                                        className="p-3 text-slate-200 hover:text-rose-500 bg-slate-50 rounded-full transition-colors"
+                                        className="p-3 text-slate-200 hover:text-danger-500 bg-slate-50 rounded-full transition-colors"
                                         title="Eliminar"
                                     >
                                         {isDeleting === item.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
@@ -80,7 +80,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                             </div>
                             <button
                                 onClick={() => openSavedPlanning(item)}
-                                className="w-full bg-amber-500 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg hover:bg-amber-600 active:scale-95 transition-all tracking-widest"
+                                className="w-full bg-baul text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg hover:bg-baul-600 active:scale-95 transition-all tracking-widest"
                             >
                                 Ver Documento
                             </button>
