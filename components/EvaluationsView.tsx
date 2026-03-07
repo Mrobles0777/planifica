@@ -1,3 +1,5 @@
+import React, { useState } from 'react';
+import { Target, ArrowLeft, Save, UserPlus, Baby, GraduationCap, Calendar, Building2, Hash, Sparkles, User } from 'lucide-react';
 import { Child, EvaluationSession, EvaluationIndicator, AchievementLevel } from '../types';
 import { supabase } from '../supabaseClient';
 import EvaluationTrackingView from './EvaluationTrackingView';
@@ -248,7 +250,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
                 <div className="bg-white p-8 md:p-10 rounded-[4rem] shadow-2xl border-4 border-rose-50 space-y-8 overflow-hidden">
                 <div className="flex items-center gap-3">
                     <div className="p-3 bg-rose-100 rounded-2xl">
-                        <sparkles className="w-5 h-5 text-rose-600" />
+                        <Sparkles className="w-5 h-5 text-rose-600" />
                     </div>
                     <h3 className="text-xl font-black text-slate-800 tracking-tight">Eje Motricidad y Autonomía</h3>
                 </div>
