@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 import { CURRICULUM_DATA } from '../constants';
 
 interface EvaluationTrackingViewProps {
-    child: Child;
+    child: Child | null;
     children: Child[];
     evaluations: any[];
     onBack: () => void;
@@ -23,7 +23,9 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
     const [viewMode, setViewMode] = useState<Record<string, 'individual' | 'general'>>({});
     const [selectedDashboardAmbito, setSelectedDashboardAmbito] = useState<string>('Desarrollo Personal y Social');
 
-    const childEvaluations = (evaluations || []).filter(ev => ev.child_ids?.includes(child.id));
+    const childEvaluations = child 
+        ? (evaluations || []).filter(ev => ev.child_ids?.includes(child.id))
+        : (evaluations || []);
     const ambitos = Array.from(new Set(CURRICULUM_DATA.map(n => n.ambito)));
 
     const calculateStats = (evals: any | any[]) => {
@@ -57,7 +59,10 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                     }
 
                     const evalsByChild = ind.evaluationsByChild || {};
-                    Object.values(evalsByChild).forEach((val: any) => {
+                    const valuesToProcess = child ? [evalsByChild[child.id]] : Object.values(evalsByChild);
+
+                    valuesToProcess.forEach((val: any) => {
+                        if (!val) return;
                         ambitosMap[ambito].total++;
                         ambitosMap[ambito].nucleos[nucleoName].total++;
                         if (val === 'L') { ambitosMap[ambito].L++; ambitosMap[ambito].nucleos[nucleoName].L++; }
@@ -79,7 +84,9 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
 
             const isLandscape = type !== 'individual';
             const dateStr = new Date().toLocaleDateString('es-CL').replace(/\//g, '-');
-            const sanitizedName = child.firstName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/gi, '_');
+            const sanitizedName = child 
+                ? child.firstName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/gi, '_')
+                : 'General_Clase';
             const fileName = `Planifica_${type === 'full' ? 'Historial_Completo' : (type === 'individual' ? 'Reporte' : 'Matriz')}_${sanitizedName}.pdf`;
 
             const opt = {
@@ -120,8 +127,12 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                     <ArrowLeft className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                 </button>
                 <div>
-                    <h2 className="text-3xl font-black text-slate-800">Seguimiento: {child.firstName} {child.lastName}</h2>
-                    <p className="text-sky-500 font-bold uppercase tracking-wider text-xs italic">Historial acumulado de progresos</p>
+                    <h2 className="text-3xl font-black text-slate-800">
+                        {child ? `Seguimiento: ${child.firstName} ${child.lastName}` : 'Seguimiento General de Clase'}
+                    </h2>
+                    <p className="text-sky-500 font-bold uppercase tracking-wider text-xs italic">
+                        {child ? 'Historial acumulado de progresos' : 'Consolidado de todas las evaluaciones del curso'}
+                    </p>
                 </div>
                 <div className="flex-1 flex justify-end">
                     <button
@@ -201,20 +212,33 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                         {currentMode === 'individual' ? (
                                             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
                                                 <div className="bg-sky-50/30 rounded-3xl p-6 border-2 border-sky-100/30">
-                                                    <h5 className="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-4 px-2">Logros Individuales de Sesión</h5>
+                                                    <h5 className="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-4 px-2">
+                                                        {child ? `Logros Individuales para ${child.firstName}` : 'Logros Consolidados del Grupo'}
+                                                    </h5>
                                                     <div className="space-y-3">
                                                         {(ev.indicators || []).map((ind: any, i: number) => {
-                                                            const result = isNewFormat ? ind.evaluationsByChild?.[child.id] : ind.finalAchievement;
+                                                            let result = '-';
+                                                            if (child) {
+                                                                result = ind.evaluationsByChild?.[child.id] || ind.finalAchievement;
+                                                            } else {
+                                                                // Modo general: mostrar tendencia o mayoría? 
+                                                                // Por ahora mantenemos la matriz como principal para "General"
+                                                                // Pero en la "tarjeta" individual si no hay niño, mostramos el conteo L
+                                                                const vals = Object.values(ind.evaluationsByChild || {}) as string[];
+                                                                const lCount = vals.filter(v => v === 'L').length;
+                                                                result = `${lCount} L`;
+                                                            }
                                                             return (
                                                                 <div key={i} className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                                                     <span className="text-xs font-bold text-slate-700 leading-tight pr-4">{ind.text}</span>
                                                                     <span className={`px-4 py-2 rounded-xl text-[10px] font-black shadow-sm shrink-0 border ${
-                                                                        result === 'L' ? 'bg-emerald-500 text-white border-emerald-400' :
-                                                                        result === 'ML' ? 'bg-amber-500 text-white border-amber-400' :
-                                                                        result === 'N/O' ? 'bg-slate-500 text-white border-slate-400' :
+                                                                        child && result === 'L' ? 'bg-emerald-500 text-white border-emerald-400' :
+                                                                        child && result === 'ML' ? 'bg-amber-500 text-white border-amber-400' :
+                                                                        child && result === 'N/O' ? 'bg-slate-500 text-white border-slate-400' :
+                                                                        !child ? 'bg-sky-50 text-sky-600 border-sky-100' :
                                                                         'bg-slate-50 text-slate-300 border-slate-100'
                                                                     }`}>
-                                                                        {result || '-'}
+                                                                        {result}
                                                                     </span>
                                                                 </div>
                                                             );
@@ -302,8 +326,8 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                             </div>
                                             <div className="grid grid-cols-3 gap-6 mb-12">
                                                 <div className="bg-sky-50 p-6 rounded-[2rem] border border-sky-200">
-                                                    <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">Alumno</p>
-                                                    <p className="text-xl font-black">{child.firstName} {child.lastName}</p>
+                                                    <p className="text-[9px] font-black text-sky-500 uppercase tracking-widest mb-1">Entidad</p>
+                                                    <p className="text-xl font-black">{child ? `${child.firstName} ${child.lastName}` : 'Grupo Completo'}</p>
                                                 </div>
                                                 <div className="bg-amber-50 p-6 rounded-[2rem] border border-amber-200">
                                                     <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Nivel</p>
@@ -324,7 +348,9 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                             <div className="flex-1">
                                                                 <div className="flex justify-between items-center mb-4">
                                                                     <span className="text-xs font-black uppercase tracking-widest" style={{ color: color }}>Indicador {i + 1}</span>
-                                                                    <span className="px-5 py-2 rounded-xl text-[10px] font-black text-white shadow-sm" style={{ background: color }}>{result || 'PENDIENTE'}</span>
+                                                                    <span className="px-5 py-2 rounded-xl text-[10px] font-black text-white shadow-sm" style={{ background: color }}>
+                                                                        {child ? (ind.evaluationsByChild?.[child.id] || ind.finalAchievement || 'PENDIENTE') : 'CONSOLIDADO'}
+                                                                    </span>
                                                                 </div>
                                                                 <p className="text-xl font-bold text-slate-800 leading-tight">{ind.text}</p>
                                                             </div>
@@ -590,16 +616,16 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
 
                             <div className="grid grid-cols-3 gap-8 mb-16">
                                 <div className="bg-sky-50 p-8 rounded-[3rem] border-2 border-sky-100">
-                                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest mb-2">Alumno/a</p>
-                                    <p className="text-2xl font-black text-slate-800">{child.firstName} {child.lastName}</p>
+                                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest mb-2">Entidad</p>
+                                    <p className="text-2xl font-black text-slate-800">{child ? `${child.firstName} ${child.lastName}` : 'General Clase'}</p>
                                 </div>
                                 <div className="bg-amber-50 p-8 rounded-[3rem] border-2 border-amber-100">
                                     <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2">Registros</p>
                                     <p className="text-2xl font-black text-slate-800">{childEvaluations.length} Sesiones</p>
                                 </div>
                                 <div className="bg-emerald-50 p-8 rounded-[3rem] border-2 border-emerald-100">
-                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Estado</p>
-                                    <p className="text-2xl font-black text-slate-800">Finalizado</p>
+                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Población</p>
+                                    <p className="text-2xl font-black text-slate-800">{child ? 'Individual' : `${children.length} Alumnos`}</p>
                                 </div>
                             </div>
 
@@ -651,15 +677,23 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                         </div>
                                         <div className="space-y-4">
                                             {(ev.indicators || []).map((ind: any, i: number) => {
-                                                const res = ind.evaluationsByChild?.[child.id] || ind.finalAchievement;
+                                                let res = '-';
+                                                if (child) {
+                                                    res = ind.evaluationsByChild?.[child.id] || ind.finalAchievement;
+                                                } else {
+                                                    const v = Object.values(ind.evaluationsByChild || {});
+                                                    res = `${v.filter(x => x === 'L').length} L / ${v.length}`;
+                                                }
                                                 return (
                                                     <div key={i} className="flex justify-between items-center p-6 bg-slate-50/50 rounded-2xl border-2 border-slate-50/50">
                                                         <span className="text-sm font-bold text-slate-700 max-w-[80%]">{ind.text}</span>
                                                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black shadow-sm ${
-                                                            res === 'L' ? 'bg-emerald-500 text-white' :
-                                                            res === 'ML' ? 'bg-amber-500 text-white' :
-                                                            res === 'N/O' ? 'bg-rose-500 text-white' : 'bg-slate-200 text-slate-400'
-                                                        }`}>{res || '-'}</span>
+                                                            child && res === 'L' ? 'bg-emerald-500 text-white' :
+                                                            child && res === 'ML' ? 'bg-amber-500 text-white' :
+                                                            child && res === 'N/O' ? 'bg-rose-500 text-white' : 
+                                                            !child ? 'bg-slate-800 text-white' :
+                                                            'bg-slate-200 text-slate-400'
+                                                        }`}>{res}</span>
                                                     </div>
                                                 );
                                             })}
