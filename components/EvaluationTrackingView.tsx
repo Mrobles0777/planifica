@@ -1,7 +1,7 @@
+import React, { useState } from 'react';
 import { ArrowLeft, Download, Calendar, Building2, User, ChevronRight, FileText, Trash2, Loader2 } from 'lucide-react';
 import { Child } from '../types';
 import { supabase } from '../supabaseClient';
-import { useState } from 'react';
 
 interface EvaluationTrackingViewProps {
     child: Child;
@@ -19,10 +19,9 @@ const EVAL_MODES = [
 
 const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, children, evaluations, onBack, onFetchEvaluations }) => {
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
-    const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<Record<string, 'individual' | 'general'>>({});
 
-    const childEvaluations = evaluations.filter(ev => ev.child_ids?.includes(child.id));
+    const childEvaluations = (evaluations || []).filter(ev => ev.child_ids?.includes(child.id));
 
     const exportToPDF = (evaluation: any) => {
         const element = document.getElementById(`pdf-eval-${evaluation.id}`);
@@ -142,7 +141,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                             <div className="bg-sky-50 rounded-3xl p-6 border-2 border-sky-100/50">
                                                 <h5 className="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-4">Resultados Individuales</h5>
                                                 <div className="space-y-3">
-                                                    {ev.indicators.map((ind: any, i: number) => {
+                                                    {(ev.indicators || []).map((ind: any, i: number) => {
                                                         const result = isNewFormat ? ind.evaluationsByChild?.[child.id] : ind.finalAchievement;
                                                         const modeLabel = EVAL_MODES.find(m => m.id === result)?.label || '-';
                                                         
@@ -155,7 +154,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                     result === 'N/O' ? 'bg-slate-500 text-white' :
                                                                     'bg-slate-100 text-slate-400'
                                                                 }`}>
-                                                                    {result === 'None' || !result ? 'PENDIENTE' : modeLabel}
+                                                                    {(!result || result === 'None') ? 'PENDIENTE' : modeLabel}
                                                                 </span>
                                                             </div>
                                                         );
@@ -176,8 +175,8 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                     <div className="absolute bottom-2 left-4 text-[8px] font-black text-rose-400 uppercase tracking-widest">Nombres</div>
                                                                     <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top right, transparent calc(50% - 1px), #fecdd3, transparent calc(50% + 1px))' }}></div>
                                                                 </th>
-                                                                {ev.child_ids.map((cid: string, idx: number) => {
-                                                                    const childData = children.find(c => c.id === cid);
+                                                                {(ev.child_ids || []).map((cid: string, idx: number) => {
+                                                                    const childData = (children || []).find(c => c.id === cid);
                                                                     return (
                                                                         <th key={cid} className="p-0 border-b-2 border-r border-rose-200 bg-white min-w-[50px]">
                                                                             <div className="flex flex-col h-full">
@@ -194,7 +193,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {ev.indicators.map((ind: any, objIdx: number) => (
+                                                            {(ev.indicators || []).map((ind: any, objIdx: number) => (
                                                                 <tr key={objIdx}>
                                                                     <td className="p-4 border-b border-r-2 border-rose-200 bg-white">
                                                                         <div className="flex gap-2 items-start">
@@ -202,7 +201,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                             <span className="text-[10px] font-bold text-slate-700 leading-tight">{ind.text}</span>
                                                                         </div>
                                                                     </td>
-                                                                    {ev.child_ids.map((cid: string) => {
+                                                                    {(ev.child_ids || []).map((cid: string) => {
                                                                         const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
                                                                         return (
                                                                             <td key={cid} className="p-2 border-b border-r border-rose-100 text-center bg-white">
@@ -272,7 +271,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {ev.indicators.map((ind: any, i: number) => {
+                                                {(ev.indicators || []).map((ind: any, i: number) => {
                                                     const result = isNewFormat ? ind.evaluationsByChild?.[child.id] : ind.finalAchievement;
                                                     return (
                                                         <tr key={i}>
