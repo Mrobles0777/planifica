@@ -29,8 +29,8 @@ interface CreateViewProps {
 
 const EVAL_MODES = [
     { id: 'L', label: 'L', full: 'Logrado' },
-    { id: 'ML', label: 'ML', full: 'Muy Logrado' },
-    { id: 'N/O', label: 'N/O', full: 'No Logrado' }
+    { id: 'ML', label: 'ML', full: 'Medianamente Logrado' },
+    { id: 'N/O', label: 'N/O', full: 'No Observado' }
 ];
 
 const CreateView: React.FC<CreateViewProps> = ({
