@@ -84,7 +84,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                 filename: fileName,
                 image: { type: 'jpeg', quality: 1.0 },
                 html2canvas: { 
-                    scale: 3, // Mayor escala para nitidez premium
+                    scale: 3, 
                     useCORS: true,
                     logging: false,
                     backgroundColor: '#ffffff',
@@ -237,7 +237,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                                        <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
                                             <div className="bg-rose-50 rounded-[2.5rem] p-6 border-2 border-rose-100/50 overflow-hidden">
                                                 <h5 className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-4">Matriz General de la Sesión</h5>
                                                 <div className="overflow-x-auto custom-scrollbar -mx-2">
@@ -296,6 +296,101 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                     </table>
                                                 </div>
                                             </div>
+
+                                            {/* Dashboard de Resultados en UI (New) */}
+                                            <div className="mt-12 bg-white rounded-[2.5rem] p-10 border-2 border-slate-50 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                                <div className="flex items-center justify-between mb-10">
+                                                    <div>
+                                                        <h3 className="text-xl font-black text-slate-800 italic">Dashboard de Resultados</h3>
+                                                        <p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">Análisis por Ámbitos y Núcleos</p>
+                                                    </div>
+                                                    <div className="flex gap-2 p-1.5 bg-slate-50 rounded-2xl border border-slate-100">
+                                                        {ambitos.map(amb => (
+                                                            <button
+                                                                key={amb}
+                                                                onClick={() => setSelectedDashboardAmbito(amb)}
+                                                                className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                                                                    selectedDashboardAmbito === amb 
+                                                                    ? 'bg-white text-sky-600 shadow-sm' 
+                                                                    : 'text-slate-400 hover:text-slate-600'
+                                                                }`}
+                                                            >
+                                                                {amb.split(' ')[0]}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {(() => {
+                                                    const stats = calculateStats(ev);
+                                                    const currentAmbitoStats = stats?.[selectedDashboardAmbito];
+                                                    
+                                                    if (!currentAmbitoStats) return (
+                                                        <div className="bg-slate-50/50 p-12 rounded-[2rem] border-2 border-dashed border-slate-200 text-center">
+                                                            <p className="text-slate-400 font-bold text-sm italic">No hay datos suficientes para este ámbito en esta sesión.</p>
+                                                        </div>
+                                                    );
+
+                                                    const getPerc = (val: number) => ((val / currentAmbitoStats.total) * 100).toFixed(0);
+
+                                                    return (
+                                                        <div className="space-y-10">
+                                                            {/* Resumen General de Ámbito */}
+                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                                <div className="bg-emerald-50/30 p-8 rounded-[2rem] border-2 border-emerald-100/50 flex flex-col items-center">
+                                                                    <div className="text-3xl font-black text-emerald-600 mb-1">{getPerc(currentAmbitoStats.L)}%</div>
+                                                                    <div className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Logrado (L)</div>
+                                                                </div>
+                                                                <div className="bg-amber-50/30 p-8 rounded-[2rem] border-2 border-amber-100/50 flex flex-col items-center">
+                                                                    <div className="text-3xl font-black text-amber-600 mb-1">{getPerc(currentAmbitoStats.ML)}%</div>
+                                                                    <div className="text-[9px] font-black text-amber-400 uppercase tracking-widest">Med. Logrado (ML)</div>
+                                                                </div>
+                                                                <div className="bg-rose-50/30 p-8 rounded-[2rem] border-2 border-rose-100/50 flex flex-col items-center">
+                                                                    <div className="text-3xl font-black text-rose-600 mb-1">{getPerc(currentAmbitoStats['N/O'])}%</div>
+                                                                    <div className="text-[9px] font-black text-rose-400 uppercase tracking-widest">No Obs. (N/O)</div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Desglose por Núcleos */}
+                                                            <div className="space-y-6">
+                                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-sky-400"></div>
+                                                                    Desglose por Núcleos
+                                                                </h4>
+                                                                <div className="grid grid-cols-1 gap-6">
+                                                                    {Object.entries(currentAmbitoStats.nucleos).map(([name, nStats]) => {
+                                                                        const nStatsTyped = nStats as { total: number, L: number, ML: number, 'N/O': number };
+                                                                        const lPerc = (nStatsTyped.L / nStatsTyped.total) * 100;
+                                                                        const mlPerc = (nStatsTyped.ML / nStatsTyped.total) * 100;
+                                                                        const noPerc = (nStatsTyped['N/O'] / nStatsTyped.total) * 100;
+
+                                                                        return (
+                                                                            <div key={name} className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
+                                                                                <div className="flex justify-between items-end">
+                                                                                    <span className="text-xs font-black text-slate-700">{name}</span>
+                                                                                    <span className="text-[9px] font-black text-sky-500 uppercase tracking-widest bg-white px-3 py-1 rounded-lg border border-sky-100">
+                                                                                        {nStatsTyped.total} evals.
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="h-3 w-full bg-white rounded-full overflow-hidden flex shadow-inner border border-slate-100">
+                                                                                    <div style={{ width: `${lPerc}%` }} className="h-full bg-emerald-400 transition-all duration-500"></div>
+                                                                                    <div style={{ width: `${mlPerc}%` }} className="h-full bg-amber-400 transition-all duration-500"></div>
+                                                                                    <div style={{ width: `${noPerc}%` }} className="h-full bg-rose-400 transition-all duration-500"></div>
+                                                                                </div>
+                                                                                <div className="flex gap-4">
+                                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">L: {lPerc.toFixed(0)}%</span>
+                                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">ML: {mlPerc.toFixed(0)}%</span>
+                                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">N/O: {noPerc.toFixed(0)}%</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -304,7 +399,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                 <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '210mm', pointerEvents: 'none' }} aria-hidden="true">
                                     <div id={`pdf-eval-${ev.id}`} className="bg-white text-slate-800 font-sans p-16">
                                         <div className="min-w-[700px]">
-                                            {/* Header Unificado Estilo Planificación */}
+                                            {/* Header */}
                                             <div className="flex items-center justify-between w-full border-b-8 border-sky-400 pb-12 mb-12">
                                                 <div className="flex items-center gap-8">
                                                     <div className="p-6 bg-sky-500 rounded-[2rem]">
@@ -323,7 +418,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 </div>
                                             </div>
 
-                                            {/* Grid de Información (Planning Style) */}
+                                            {/* Grid Contextual */}
                                             <div className="grid grid-cols-3 gap-6 mb-16">
                                                 <div className="bg-sky-50/50 p-8 rounded-[2.5rem] border-2 border-sky-100 flex items-center gap-6">
                                                     <div className="p-4 bg-white rounded-2xl text-sky-500 shadow-sm"><User className="w-8 h-8" /></div>
@@ -348,7 +443,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 </div>
                                             </div>
 
-                                            {/* Indicators Section (Planning Style) */}
+                                            {/* Indicadores */}
                                             <div className="space-y-8">
                                                 {(ev.indicators || []).map((ind: any, i: number) => {
                                                     const result = isNewFormat ? ind.evaluationsByChild?.[child.id] : ind.finalAchievement;
@@ -377,7 +472,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 })}
                                             </div>
 
-                                            {/* Footer Unificado */}
+                                            {/* Footer PDF Individual */}
                                             <div className="mt-24 pt-12 border-t border-slate-100 flex justify-between items-end">
                                                 <div className="space-y-4">
                                                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Simbología</p>
@@ -402,7 +497,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                 <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '297mm', pointerEvents: 'none' }} aria-hidden="true">
                                     <div id={`pdf-matrix-${ev.id}`} className="bg-white p-8">
                                         <div className="min-w-[900px]">
-                                            {/* Header Unificado Estilo Planificación (Landscape) */}
+                                            {/* Header Matrix Landscape */}
                                             <div className="flex items-center justify-between w-full border-b-[6px] border-sky-400 pb-8 mb-8">
                                                 <div className="flex items-center gap-6">
                                                     <div className="p-4 bg-sky-500 rounded-[1.5rem]">
@@ -421,7 +516,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 </div>
                                             </div>
 
-                                            {/* Grid de Información Contextual */}
+                                            {/* Grid Contextual Landscape */}
                                             <div className="grid grid-cols-3 gap-4 mb-10 px-2">
                                                 <div className="bg-sky-50/50 p-6 rounded-[2rem] border-2 border-sky-100 flex items-center gap-4">
                                                     <div className="p-3 bg-white rounded-xl text-sky-500 shadow-sm"><Target className="w-6 h-6" /></div>
@@ -446,7 +541,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 </div>
                                             </div>
 
-                                            {/* Matrix Table with Fixed Alignment */}
+                                            {/* Matrix Table */}
                                             <div className="overflow-hidden rounded-[3rem] border-2 border-slate-100 bg-white mb-16 shadow-sm">
                                                 <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
                                                     <colgroup>
@@ -521,7 +616,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 </table>
                                             </div>
 
-                                            {/* Footer Matriz Unificado */}
+                                            {/* Footer Matrix Landscape */}
                                             <div className="mt-8 flex justify-between items-start px-8">
                                                 <div className="space-y-6">
                                                     <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
@@ -536,7 +631,6 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                         </div>
                                                     </div>
                                                 </div>
-                                                
                                                 <div className="flex gap-20 pt-10">
                                                     <div className="text-center w-64">
                                                         <div className="border-b-2 border-slate-200 mb-4 h-16 w-full"></div>
@@ -548,45 +642,28 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                     </div>
                                                 </div>
                                             </div>
-                                            {/* Dashboard de Resultados (New) */}
-                                            <div className="mt-16 bg-slate-50/50 rounded-[3rem] p-10 border-2 border-slate-100">
+
+                                            {/* Dashboard de Resultados en PDF (New) */}
+                                            <div className="mt-16 bg-slate-50/50 rounded-[3rem] p-10 border-2 border-slate-100 html2pdf__page-break">
                                                 <div className="flex items-center justify-between mb-10">
                                                     <div>
-                                                        <h3 className="text-2xl font-black text-slate-800 italic">Dashboard de Resultados</h3>
+                                                        <h3 className="text-2xl font-black text-slate-800 italic">Resumen de Logros Curriculares</h3>
                                                         <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Análisis por Ámbitos y Núcleos</p>
                                                     </div>
-                                                    <div className="flex gap-2 p-1 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                                                        {ambitos.map(amb => (
-                                                            <button
-                                                                key={amb}
-                                                                onClick={() => setSelectedDashboardAmbito(amb)}
-                                                                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                                                    selectedDashboardAmbito === amb 
-                                                                    ? 'bg-sky-500 text-white shadow-md shadow-sky-100' 
-                                                                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-                                                                }`}
-                                                            >
-                                                                {amb.split(' ')[0]}
-                                                            </button>
-                                                        ))}
+                                                    <div className="px-6 py-2 bg-sky-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-sky-100">
+                                                        {selectedDashboardAmbito}
                                                     </div>
                                                 </div>
 
                                                 {(() => {
                                                     const stats = calculateStats(ev);
                                                     const currentAmbitoStats = stats?.[selectedDashboardAmbito];
-                                                    
-                                                    if (!currentAmbitoStats) return (
-                                                        <div className="bg-white p-12 rounded-[2.5rem] border-2 border-dashed border-slate-200 text-center">
-                                                            <p className="text-slate-400 font-bold italic">No hay datos suficientes para este ámbito en esta sesión.</p>
-                                                        </div>
-                                                    );
+                                                    if (!currentAmbitoStats) return null;
 
                                                     const getPerc = (val: number) => ((val / currentAmbitoStats.total) * 100).toFixed(0);
 
                                                     return (
                                                         <div className="space-y-10">
-                                                            {/* Resumen General de Ámbito */}
                                                             <div className="grid grid-cols-3 gap-6">
                                                                 <div className="bg-white p-8 rounded-[2.5rem] border-2 border-emerald-100 shadow-sm flex flex-col items-center">
                                                                     <div className="text-3xl font-black text-emerald-600 mb-1">{getPerc(currentAmbitoStats.L)}%</div>
@@ -602,13 +679,12 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                 </div>
                                                             </div>
 
-                                                            {/* Desglose por Núcleos */}
                                                             <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
                                                                 <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8 px-4 flex items-center gap-3">
                                                                     <div className="w-2 h-2 rounded-full bg-sky-400"></div>
                                                                     Desglose por Núcleos
                                                                 </h4>
-                                                                <div className="space-y-8 px-4">
+                                                                <div className="space-y-12 px-4">
                                                                     {Object.entries(currentAmbitoStats.nucleos).map(([name, nStats]) => {
                                                                         const nStatsTyped = nStats as { total: number, L: number, ML: number, 'N/O': number };
                                                                         const lPerc = (nStatsTyped.L / nStatsTyped.total) * 100;
@@ -616,31 +692,17 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                         const noPerc = (nStatsTyped['N/O'] / nStatsTyped.total) * 100;
 
                                                                         return (
-                                                                            <div key={name} className="space-y-3">
+                                                                            <div key={name} className="space-y-4">
                                                                                 <div className="flex justify-between items-end">
-                                                                                    <span className="text-sm font-black text-slate-800">{name}</span>
+                                                                                    <span className="text-base font-black text-slate-800">{name}</span>
                                                                                     <span className="text-[10px] font-black text-sky-500 uppercase tracking-widest bg-sky-50 px-3 py-1 rounded-lg">
-                                                                                        {nStats.total} evals.
+                                                                                        {nStatsTyped.total} EVALUACIONES
                                                                                     </span>
                                                                                 </div>
-                                                                                <div className="h-4 w-full bg-slate-50 rounded-full overflow-hidden flex shadow-inner border border-slate-100">
-                                                                                    <div style={{ width: `${lPerc}%` }} className="h-full bg-emerald-400 transition-all duration-500 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.05)]"></div>
-                                                                                    <div style={{ width: `${mlPerc}%` }} className="h-full bg-amber-400 transition-all duration-500 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.05)]"></div>
-                                                                                    <div style={{ width: `${noPerc}%` }} className="h-full bg-rose-400 transition-all duration-500"></div>
-                                                                                </div>
-                                                                                <div className="flex gap-6">
-                                                                                    <div className="flex items-center gap-1.5">
-                                                                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-                                                                                        <span className="text-[9px] font-bold text-slate-400 uppercase">L: {lPerc.toFixed(0)}%</span>
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-1.5">
-                                                                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                                                                                        <span className="text-[9px] font-bold text-slate-400 uppercase">ML: {mlPerc.toFixed(0)}%</span>
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-1.5">
-                                                                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-400"></div>
-                                                                                        <span className="text-[9px] font-bold text-slate-400 uppercase">N/O: {noPerc.toFixed(0)}%</span>
-                                                                                    </div>
+                                                                                <div className="h-6 w-full bg-slate-50 rounded-full overflow-hidden flex shadow-inner border border-slate-100">
+                                                                                    <div style={{ width: `${lPerc}%` }} className="h-full bg-emerald-400 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.05)]"></div>
+                                                                                    <div style={{ width: `${mlPerc}%` }} className="h-full bg-amber-400 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.05)]"></div>
+                                                                                    <div style={{ width: `${noPerc}%` }} className="h-full bg-rose-400"></div>
                                                                                 </div>
                                                                             </div>
                                                                         );
