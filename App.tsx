@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Loader2, Star, Target, Calendar, User as UserIcon } from 'lucide-react';
-import { Level, GeneratedAssessment, Nucleo, Objective, Methodology, Planning, User } from './types';
+import { Level, GeneratedAssessment, Nucleo, Objective, Methodology, Planning, User, Child } from './types';
 import { CURRICULUM_DATA } from './constants';
 import { generateAssessmentDetails, generateVariablePlanning, generateGlobalPlanning } from './services/geminiService';
 import { supabase, testSupabaseConnection } from './supabaseClient';
@@ -36,7 +36,7 @@ const App: React.FC = () => {
 
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [selectedNucleo, setSelectedNucleo] = useState<Nucleo | null>(null);
-  const [selectedObjective, setSelectedObjective] = useState<Objective | null>(null);
+  const [selectedObjectives, setSelectedObjectives] = useState<Objective[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectedMethodology, setSelectedMethodology] = useState<Methodology | null>(null);
   const [expandedAmbito, setExpandedAmbito] = useState<string | null>(null);
@@ -365,11 +365,11 @@ const App: React.FC = () => {
     setErrorMessage(null);
 
     // Diagnóstico
-    if (!selectedLevel || !selectedNucleo || !selectedObjective || !selectedMethodology) {
+    if (!selectedLevel || !selectedNucleo || selectedObjectives.length === 0 || !selectedMethodology) {
       const missing = [];
       if (!selectedLevel) missing.push("Nivel");
       if (!selectedNucleo) missing.push("Núcleo");
-      if (!selectedObjective) missing.push("Objetivo");
+      if (selectedObjectives.length === 0) missing.push("Objetivo(s)");
       if (!selectedMethodology) missing.push("Metodología");
 
       const msg = `Faltan seleccionar: ${missing.join(", ")}`;
@@ -383,11 +383,11 @@ const App: React.FC = () => {
       console.log("Iniciando generación con:", {
         level: selectedLevel,
         nucleo: selectedNucleo.name,
-        objective: selectedObjective.text,
+        objectives: selectedObjectives.map(o => o.text).join(" | "),
         methodology: selectedMethodology
       });
 
-      const data = await generateAssessmentDetails(selectedLevel, selectedNucleo.name, selectedObjective.text, selectedMethodology);
+      const data = await generateAssessmentDetails(selectedLevel, selectedNucleo.name, selectedObjectives.map(o => o.text).join(" | "), selectedMethodology);
 
       if (!data) throw new Error("La IA no devolvió datos válidos.");
 
@@ -395,7 +395,7 @@ const App: React.FC = () => {
         ...data,
         level: selectedLevel,
         nucleo: selectedNucleo.name,
-        objective: selectedObjective.text,
+        objective: selectedObjectives.map(o => o.text).join(" | "),
         methodology: selectedMethodology,
         createdAt: new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-CL')
       });
@@ -556,7 +556,7 @@ const App: React.FC = () => {
     setTimeout(handleExportPDF, 800);
   };
   const resetForm = () => {
-    setSelectedLevel(null); setSelectedNucleo(null); setSelectedObjective(null);
+    setSelectedLevel(null); setSelectedNucleo(null); setSelectedObjectives([]);
     setSelectedDate(new Date().toISOString().split('T')[0]);
     setSelectedMethodology(null); setExpandedAmbito(null);
     setCurrentAssessment(null); setCurrentPlanning(null); setGlobalPlanningResult(null);
@@ -684,8 +684,8 @@ const App: React.FC = () => {
             setSelectedLevel={setSelectedLevel}
             selectedNucleo={selectedNucleo}
             setSelectedNucleo={setSelectedNucleo}
-            selectedObjective={selectedObjective}
-            setSelectedObjective={setSelectedObjective}
+            selectedObjectives={selectedObjectives}
+            setSelectedObjectives={setSelectedObjectives}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
             selectedMethodology={selectedMethodology}
@@ -699,6 +699,7 @@ const App: React.FC = () => {
             isGeneratingPlanning={isGeneratingPlanning}
             setView={handleViewChange}
             openMaterialSearch={openMaterialSearch}
+            children={children}
           />
         )}
 

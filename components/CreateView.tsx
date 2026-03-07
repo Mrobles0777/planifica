@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowLeft, ChevronRight, ChevronDown, CalendarDays, Star, Zap, Palette, CheckCircle2, Loader2, Sparkles, X, Search } from 'lucide-react';
-import { Level, Nucleo, Objective, Methodology, GeneratedAssessment } from '../types';
+import { Level, Nucleo, Objective, Methodology, GeneratedAssessment, Child } from '../types';
 
 interface CreateViewProps {
     currentAssessment: GeneratedAssessment | null;
@@ -9,8 +9,8 @@ interface CreateViewProps {
     setSelectedLevel: (level: Level | null) => void;
     selectedNucleo: Nucleo | null;
     setSelectedNucleo: (nucleo: Nucleo | null) => void;
-    selectedObjective: Objective | null;
-    setSelectedObjective: (objective: Objective | null) => void;
+    selectedObjectives: Objective[];
+    setSelectedObjectives: (objectives: Objective[]) => void;
     selectedDate: string;
     setSelectedDate: (date: string) => void;
     selectedMethodology: Methodology | null;
@@ -24,7 +24,14 @@ interface CreateViewProps {
     isGeneratingPlanning: boolean;
     setView: (view: any) => void;
     openMaterialSearch: (material: string) => void;
+    children: Child[];
 }
+
+const EVAL_MODES = [
+    { id: 'L', label: 'L', full: 'Logrado' },
+    { id: 'ML', label: 'ML', full: 'Muy Logrado' },
+    { id: 'N/O', label: 'N/O', full: 'No Logrado' }
+];
 
 const CreateView: React.FC<CreateViewProps> = ({
     currentAssessment,
@@ -33,8 +40,8 @@ const CreateView: React.FC<CreateViewProps> = ({
     setSelectedLevel,
     selectedNucleo,
     setSelectedNucleo,
-    selectedObjective,
-    setSelectedObjective,
+    selectedObjectives,
+    setSelectedObjectives,
     selectedDate,
     setSelectedDate,
     selectedMethodology,
@@ -47,8 +54,28 @@ const CreateView: React.FC<CreateViewProps> = ({
     handleGeneratePlanning,
     isGeneratingPlanning,
     setView,
-    openMaterialSearch
+    openMaterialSearch,
+    children
 }) => {
+    const [evaluations, setEvaluations] = React.useState<Record<string, Record<string, string>>>({});
+
+    const handleEvalChange = (childId: string, objectiveId: string, value: string) => {
+        setEvaluations(prev => ({
+            ...prev,
+            [objectiveId]: {
+                ...(prev[objectiveId] || {}),
+                [childId]: value
+            }
+        }));
+    };
+
+    const toggleObjective = (obj: Objective) => {
+        if (selectedObjectives.find(o => o.id === obj.id)) {
+            setSelectedObjectives(selectedObjectives.filter(o => o.id !== obj.id));
+        } else {
+            setSelectedObjectives([...selectedObjectives, obj]);
+        }
+    };
     if (currentAssessment) {
         return (
             <div className="space-y-8 animate-in zoom-in-95">
@@ -122,7 +149,7 @@ const CreateView: React.FC<CreateViewProps> = ({
                     {Object.values(Level).map((lvl) => (
                         <button
                             key={lvl}
-                            onClick={() => { setSelectedLevel(lvl); setSelectedNucleo(null); }}
+                            onClick={() => { setSelectedLevel(lvl); setSelectedNucleo(null); setSelectedObjectives([]); }}
                             className={`text-left p-6 rounded-[2rem] border-2 transition-all ${selectedLevel === lvl ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-lg' : 'border-slate-100 bg-white hover:border-sky-100'}`}
                         >
                             <span className="text-base font-black">{lvl}</span>
@@ -150,7 +177,7 @@ const CreateView: React.FC<CreateViewProps> = ({
                                         {groupedData[ambito].map(nuc => (
                                             <button
                                                 key={nuc.name}
-                                                onClick={() => { setSelectedNucleo(nuc); setSelectedObjective(null); }}
+                                                onClick={() => { setSelectedNucleo(nuc); setSelectedObjectives([]); }}
                                                 className={`w-full text-left p-5 rounded-2xl border-2 transition-all ${selectedNucleo?.name === nuc.name ? 'bg-rose-500 text-white border-rose-500 shadow-md' : 'bg-white text-slate-600 border-slate-50 hover:border-rose-100'}`}
                                             >
                                                 <span className="text-xs font-bold leading-tight">{nuc.name}</span>
@@ -172,11 +199,11 @@ const CreateView: React.FC<CreateViewProps> = ({
                         {selectedNucleo.objectives[selectedLevel].map((obj) => (
                             <button
                                 key={obj.id}
-                                onClick={() => setSelectedObjective(obj)}
-                                className={`text-left p-6 rounded-[2.5rem] border-2 transition-all ${selectedObjective?.id === obj.id ? 'border-emerald-500 bg-emerald-50 shadow-md scale-[1.01]' : 'border-slate-100 bg-white hover:border-emerald-50'}`}
+                                onClick={() => toggleObjective(obj)}
+                                className={`text-left p-6 rounded-[2.5rem] border-2 transition-all ${selectedObjectives.find(o => o.id === obj.id) ? 'border-emerald-500 bg-emerald-50 shadow-md scale-[1.01]' : 'border-slate-100 bg-white hover:border-emerald-50'}`}
                             >
                                 <div className="flex gap-4">
-                                    <span className="text-[10px] font-black text-white bg-emerald-400 px-4 py-1.5 rounded-full h-fit shrink-0 tracking-widest">OA {obj.id}</span>
+                                    <span className={`text-[10px] font-black text-white ${selectedObjectives.find(o => o.id === obj.id) ? 'bg-emerald-500' : 'bg-emerald-400'} px-4 py-1.5 rounded-full h-fit shrink-0 tracking-widest`}>OA {obj.id}</span>
                                     <span className="text-sm font-bold text-slate-700 leading-relaxed">{obj.text}</span>
                                 </div>
                             </button>
@@ -185,10 +212,71 @@ const CreateView: React.FC<CreateViewProps> = ({
                 </div>
             )}
 
-            {/* Step 4: Date */}
-            {selectedObjective && (
+            {/* Step 4: Evaluation Matrix */}
+            {selectedObjectives.length > 0 && children.length > 0 && (
                 <div className="space-y-4 animate-in fade-in">
-                    <label className="text-[11px] font-black text-amber-500 uppercase block ml-4 tracking-widest">4. Fecha Estimada</label>
+                    <label className="text-[11px] font-black text-violet-500 uppercase block ml-4 tracking-widest">4. Matriz de Evaluación Inicial</label>
+                    <div className="bg-white rounded-[2.5rem] border-2 border-slate-100 overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50">
+                                        <th className="p-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 min-w-[300px]">Indicadores / Alumnos</th>
+                                        {children.map(child => (
+                                            <th key={child.id} className="p-4 border-b border-slate-100 min-w-[80px]">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-[10px] font-bold text-violet-600">
+                                                        {child.firstName[0]}
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-tighter whitespace-nowrap px-2" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                                                        {child.firstName}
+                                                    </span>
+                                                </div>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {selectedObjectives.map(obj => (
+                                        <tr key={obj.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="p-6 border-b border-slate-100">
+                                                <div className="flex gap-3 items-start">
+                                                    <span className="text-[8px] font-black bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-md shrink-0 mt-1">OA {obj.id}</span>
+                                                    <span className="text-[11px] font-bold text-slate-600 leading-tight">{obj.text}</span>
+                                                </div>
+                                            </td>
+                                            {children.map(child => (
+                                                <td key={child.id} className="p-2 border-b border-slate-100 text-center">
+                                                    <select
+                                                        value={evaluations[obj.id]?.[child.id] || ''}
+                                                        onChange={(e) => handleEvalChange(child.id, obj.id.toString(), e.target.value)}
+                                                        className={`w-full p-2 rounded-xl text-[10px] font-black border-2 transition-all outline-none appearance-none text-center cursor-pointer ${
+                                                            evaluations[obj.id]?.[child.id] === 'L' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
+                                                            evaluations[obj.id]?.[child.id] === 'ML' ? 'bg-sky-50 border-sky-200 text-sky-600' :
+                                                            evaluations[obj.id]?.[child.id] === 'N/O' ? 'bg-rose-50 border-rose-200 text-rose-600' :
+                                                            'bg-slate-50 border-slate-100 text-slate-400'
+                                                        }`}
+                                                    >
+                                                        <option value="">-</option>
+                                                        {EVAL_MODES.map(mode => (
+                                                            <option key={mode.id} value={mode.id}>{mode.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Step 5: Date */}
+            {selectedObjectives.length > 0 && (
+                <div className="space-y-4 animate-in fade-in">
+                    <label className="text-[11px] font-black text-amber-500 uppercase block ml-4 tracking-widest">5. Fecha Estimada</label>
                     <div className="relative">
                         <CalendarDays className="absolute left-6 top-1/2 -translate-y-1/2 text-amber-400 w-6 h-6" />
                         <input
@@ -201,10 +289,10 @@ const CreateView: React.FC<CreateViewProps> = ({
                 </div>
             )}
 
-            {/* Step 5: Methodology */}
-            {selectedObjective && (
+            {/* Step 6: Methodology */}
+            {selectedObjectives.length > 0 && (
                 <div className="space-y-4 animate-in fade-in">
-                    <label className="text-[11px] font-black text-indigo-500 uppercase block ml-4 tracking-widest">5. Enfoque Metodológico</label>
+                    <label className="text-[11px] font-black text-indigo-500 uppercase block ml-4 tracking-widest">6. Enfoque Metodológico</label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {[
                             { id: Methodology.STANDARD, label: 'Estándar', icon: <Star className="w-6 h-6" />, color: 'sky' },
