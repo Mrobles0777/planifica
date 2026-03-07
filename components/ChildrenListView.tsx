@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Plus, Baby, Calendar, GraduationCap, Info, Syringe, AlertCircle, Trash2, UserPlus, CheckCircle2, Loader2 } from 'lucide-react';
 import { Child, Level } from '../types';
 import { supabase } from '../supabaseClient';
-function formatDateForSupabase(dateStr: string) {
-    if (!dateStr) return null;
-    return dateStr;
+
+/**
+ * Parsea una fecha ISO (YYYY-MM-DD) sin conversión de zona horaria.
+ * new Date("2020-05-15") la interpreta en UTC, lo que en zonas UTC-X
+ * la desplaza al día anterior. Esta función evita ese problema.
+ */
+function parseDateWithoutTimezoneShift(dateStr: string): Date {
+    if (!dateStr) return new Date();
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
 }
+
 
 interface ChildrenListViewProps {
     setView: (view: any) => void;
@@ -28,6 +36,14 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
         allergies: '',
         otherInfo: ''
     });
+    // Referencia para limpiar el timeout si el componente se desmonta
+    const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+        };
+    }, []);
 
     const handleAddChild = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,36 +82,38 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                 throw new Error(error.message || "Error al insertar en la base de datos");
             }
 
-            if (data) {
-                const newChild: Child = {
-                    id: data.id,
-                    firstName: data.first_name,
-                    lastName: data.last_name,
-                    birthDate: data.birth_date,
-                    level: data.level as Level,
-                    vaccines: data.vaccines,
-                    allergies: data.allergies,
-                    otherInfo: data.other_info,
-                    createdAt: data.created_at
-                };
-                setChildren([newChild, ...children]);
-                // Mantenemos showForm en true para seguir agregando
-                setFormData({
-                    firstName: '',
-                    lastName: '',
-                    birthDate: '',
-                    level: Level.SALA_CUNA,
-                    vaccines: '',
-                    allergies: '',
-                    otherInfo: ''
-                });
-                setSaveSuccess(true);
-                // Cerrar el formulario y volver al listado tras 2 segundos
-                setTimeout(() => {
-                    setSaveSuccess(false);
-                    setShowForm(false);
-                }, 2000);
+            if (!data) {
+                throw new Error("La base de datos no devolvió el registro guardado. Reintenta.");
             }
+
+            const newChild: Child = {
+                id: data.id,
+                firstName: data.first_name,
+                lastName: data.last_name,
+                birthDate: data.birth_date,
+                level: data.level as Level,
+                vaccines: data.vaccines,
+                allergies: data.allergies,
+                otherInfo: data.other_info,
+                createdAt: data.created_at
+            };
+            setChildren(prev => [newChild, ...prev]);
+            setFormData({
+                firstName: '',
+                lastName: '',
+                birthDate: '',
+                level: Level.SALA_CUNA,
+                vaccines: '',
+                allergies: '',
+                otherInfo: ''
+            });
+            setSaveSuccess(true);
+            // Cerrar el formulario y volver al listado tras 2 segundos
+            if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+            successTimeoutRef.current = setTimeout(() => {
+                setSaveSuccess(false);
+                setShowForm(false);
+            }, 2000);
         } catch (err: any) {
             console.error("Error adding child:", err);
             alert(`No se pudo guardar: ${err.message || "Revisa la conexión o si la tabla existe"}`);
@@ -350,7 +368,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                             <div className="relative z-10 space-y-3 mt-6">
                                 <div className="flex items-center gap-3 text-slate-500">
                                     <Calendar className="w-4 h-4" />
-                                    <span className="text-xs font-bold leading-none">{new Date(child.birthDate).toLocaleDateString('es-CL')}</span>
+                                    <span className="text-xs font-bold leading-none">{parseDateWithoutTimezoneShift(child.birthDate).toLocaleDateString('es-CL')}</span>
                                 </div>
 
                                 {(child.vaccines || child.allergies) && (
