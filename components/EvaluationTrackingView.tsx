@@ -23,16 +23,22 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
 
     const childEvaluations = (evaluations || []).filter(ev => ev.child_ids?.includes(child.id));
 
-    const exportToPDF = (evaluation: any) => {
-        const element = document.getElementById(`pdf-eval-${evaluation.id}`);
+    const exportToPDF = (evaluation: any, type: 'individual' | 'general' = 'individual') => {
+        const elementId = type === 'individual' ? `pdf-eval-${evaluation.id}` : `pdf-matrix-${evaluation.id}`;
+        const element = document.getElementById(elementId);
         if (!element) return;
 
+        const isLandscape = type === 'general';
         const opt = {
             margin: 10,
-            filename: `Evaluacion_${child.firstName}_${new Date(evaluation.created_at).toLocaleDateString()}.pdf`,
+            filename: `${type === 'individual' ? 'Evaluacion' : 'Matriz'}_${child.firstName}_${new Date(evaluation.created_at).toLocaleDateString()}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: isLandscape ? 'landscape' : 'portrait' 
+            }
         };
 
         // @ts-ignore
@@ -118,8 +124,8 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                             </button>
                                         </div>
                                         <button
-                                            onClick={() => exportToPDF(ev)}
-                                            className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-sky-100 transition-all active:scale-95 whitespace-nowrap"
+                                            onClick={() => exportToPDF(ev, currentMode)}
+                                            className={`flex items-center gap-3 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg transition-all active:scale-95 whitespace-nowrap ${currentMode === 'individual' ? 'bg-sky-500 hover:bg-sky-600 shadow-sky-100' : 'bg-rose-500 hover:bg-rose-600 shadow-rose-100'}`}
                                         >
                                             <Download className="w-5 h-5" />
                                             PDF
@@ -298,6 +304,95 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                             <div className="text-center w-48">
                                                 <div className="border-b border-slate-400 mb-2 h-10 w-full"></div>
                                                 <p className="text-[10px] font-black uppercase tracking-tighter text-slate-500">Firma Educadora</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Contenido oculto para el PDF de la MATRIZ GENERAL */}
+                                <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '297mm', background: 'white' }}>
+                                    <div id={`pdf-matrix-${ev.id}`} className="p-10 text-slate-800 font-sans shadow-none border-none">
+                                        <div className="flex justify-between items-start mb-10 border-b-4 border-rose-500 pb-6">
+                                            <div>
+                                                <h1 className="text-4xl font-black text-rose-600 italic">Planifica</h1>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Matriz Técnica de Evaluación Grupal</p>
+                                            </div>
+                                            <div className="text-right text-xs">
+                                                <p className="font-bold text-lg">{ev.establishment}</p>
+                                                <p className="text-slate-400 font-bold">RBD: {ev.rbd} | NIVEL: {ev.level} | AÑO: {ev.year}</p>
+                                                <p className="text-slate-400 font-bold">{new Date(ev.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                            </div>
+                                        </div>
+
+                                        <table className="w-full border-collapse border-2 border-slate-200">
+                                            <thead>
+                                                <tr>
+                                                    <th className="p-4 border-2 border-slate-200 bg-slate-50 min-w-[200px] relative h-28">
+                                                        <div className="absolute top-2 right-4 text-[10px] font-black text-slate-400 uppercase">Indicadores</div>
+                                                        <div className="absolute bottom-2 left-4 text-[10px] font-black text-slate-400 uppercase">Alumnos</div>
+                                                        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top right, transparent calc(50% - 1px), #e2e8f0, transparent calc(50% + 1px))' }}></div>
+                                                    </th>
+                                                    {(ev.child_ids || []).map((cid: string, idx: number) => {
+                                                        const childData = (children || []).find(c => c.id === cid);
+                                                        return (
+                                                            <th key={cid} className="p-0 border-2 border-slate-200 bg-white min-w-[45px]">
+                                                                <div className="flex flex-col h-full">
+                                                                    <div className="py-1 border-b border-slate-100 bg-slate-50 text-[10px] font-black text-slate-400 text-center">{idx + 1}</div>
+                                                                    <div className="p-3 flex items-center justify-center min-h-[140px]">
+                                                                        <span className="text-[11px] font-black text-slate-700 uppercase tracking-tighter whitespace-nowrap block" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                                                                            {childData ? `${childData.firstName} ${childData.lastName[0]}.` : `Niño ${idx + 1}`}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </th>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {(ev.indicators || []).map((ind: any, objIdx: number) => (
+                                                    <tr key={objIdx}>
+                                                        <td className="p-4 border-2 border-slate-200 bg-white">
+                                                            <div className="flex gap-3 items-start">
+                                                                <span className="text-[10px] font-black bg-slate-800 text-white px-2 py-0.5 rounded shadow-sm shrink-0">{objIdx + 1}</span>
+                                                                <span className="text-[12px] font-bold text-slate-800 leading-tight">{ind.text}</span>
+                                                            </div>
+                                                        </td>
+                                                        {(ev.child_ids || []).map((cid: string) => {
+                                                            const isNewFormat = ind.evaluationsByChild !== undefined;
+                                                            const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
+                                                            return (
+                                                                <td key={cid} className="p-1 border-2 border-slate-200 text-center bg-white">
+                                                                    <span className={`inline-block w-8 h-8 leading-8 rounded-lg text-[11px] font-black ${
+                                                                        val === 'L' ? 'bg-emerald-500 text-white' :
+                                                                        val === 'ML' ? 'bg-amber-500 text-white' :
+                                                                        val === 'N/O' ? 'bg-slate-500 text-white' :
+                                                                        'text-slate-200 border border-slate-100'
+                                                                    }`}>
+                                                                        {val || '-'}
+                                                                    </span>
+                                                                </td>
+                                                            );
+                                                        })}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+
+                                        <div className="mt-12 flex justify-between items-end border-t-2 border-slate-100 pt-8">
+                                            <div className="text-[10px] text-slate-400 font-bold">
+                                                Simbología: L (Logrado) | ML (Medianamente Logrado) | N/O (No Observado)<br/>
+                                                Documento Técnico generado por Planifica AI
+                                            </div>
+                                            <div className="flex gap-20">
+                                                <div className="text-center w-48">
+                                                    <div className="border-b-2 border-slate-300 mb-2 h-10 w-full"></div>
+                                                    <p className="text-[10px] font-black uppercase text-slate-400">Firma Educadora</p>
+                                                </div>
+                                                <div className="text-center w-48">
+                                                    <div className="border-b-2 border-slate-300 mb-2 h-10 w-full"></div>
+                                                    <p className="text-[10px] font-black uppercase text-slate-400">Timbre Establecimiento</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
