@@ -57,7 +57,10 @@ const App: React.FC = () => {
   const [children, setChildren] = useState<Child[]>([]);
   const [focusedAssessment, setFocusedAssessment] = useState<GeneratedAssessment | null>(null);
 
-  const fetchSavedItems = useCallback(async (userId: string) => {
+  const fetchSavedItems = useCallback(async () => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
     setIsSyncing(true);
     setErrorMessage(null);
     try {
@@ -76,9 +79,12 @@ const App: React.FC = () => {
     } finally {
       setIsSyncing(false);
     }
-  }, []);
+  }, [session?.user?.id]);
 
-  const fetchChildren = useCallback(async (userId: string) => {
+  const fetchChildren = useCallback(async () => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
     try {
       const { data, error } = await supabase
         .from('children')
@@ -102,7 +108,7 @@ const App: React.FC = () => {
     } catch (err) {
       console.error("Fetch children error:", err);
     }
-  }, []);
+  }, [session?.user?.id]);
 
   const fetchUserData = useCallback(async (userId: string) => {
     try {
@@ -119,12 +125,12 @@ const App: React.FC = () => {
       } else {
         setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
       }
-      fetchSavedItems(userId);
-      fetchChildren(userId);
+      fetchSavedItems();
+      fetchChildren();
     } catch (err: any) {
       setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
-      fetchSavedItems(userId);
-      fetchChildren(userId);
+      fetchSavedItems();
+      fetchChildren();
     }
   }, [fetchSavedItems, fetchChildren]);
 
