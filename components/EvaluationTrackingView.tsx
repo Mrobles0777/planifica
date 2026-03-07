@@ -359,48 +359,48 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                 </div>
 
                                 <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '297mm', pointerEvents: 'none' }} aria-hidden="true">
-                                    <div id={`pdf-matrix-${ev.id}`} className="bg-white p-16">
+                                    <div id={`pdf-matrix-${ev.id}`} className="bg-white p-8">
                                         <div className="min-w-[900px]">
                                             {/* Header Unificado Estilo Planificación (Landscape) */}
-                                            <div className="flex items-center justify-between w-full border-b-8 border-sky-400 pb-12 mb-12">
-                                                <div className="flex items-center gap-8">
-                                                    <div className="p-6 bg-sky-500 rounded-[2rem]">
-                                                        <Star className="text-white w-12 h-12 fill-white" />
+                                            <div className="flex items-center justify-between w-full border-b-[6px] border-sky-400 pb-8 mb-8">
+                                                <div className="flex items-center gap-6">
+                                                    <div className="p-4 bg-sky-500 rounded-[1.5rem]">
+                                                        <Star className="text-white w-10 h-10 fill-white" />
                                                     </div>
                                                     <div>
-                                                        <h1 className="text-6xl font-black text-slate-900 italic">Planifica</h1>
-                                                        <p className="text-[14px] font-bold text-sky-400 uppercase tracking-[0.5em] mt-3">Matriz General de Sesión</p>
+                                                        <h1 className="text-5xl font-black text-slate-900 italic">Planifica</h1>
+                                                        <p className="text-[12px] font-bold text-sky-400 uppercase tracking-[0.4em] mt-2">Matriz General de Sesión</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-[12px] font-black text-slate-300 uppercase mb-2 tracking-widest">Emitido el</p>
-                                                    <p className="text-lg font-black text-slate-800 bg-slate-50 px-8 py-3 rounded-2xl border border-slate-100 italic">
+                                                    <p className="text-[10px] font-black text-slate-300 uppercase mb-1 tracking-widest">Emitido el</p>
+                                                    <p className="text-base font-black text-slate-800 bg-slate-50 px-6 py-2 rounded-xl border border-slate-100 italic">
                                                         {new Date(ev.created_at).toLocaleDateString('es-CL')}
                                                     </p>
                                                 </div>
                                             </div>
 
                                             {/* Grid de Información Contextual */}
-                                            <div className="grid grid-cols-3 gap-6 mb-16 px-4">
-                                                <div className="bg-sky-50/50 p-8 rounded-[2.5rem] border-2 border-sky-100 flex items-center gap-6">
-                                                    <div className="p-4 bg-white rounded-2xl text-sky-500 shadow-sm"><Target className="w-8 h-8" /></div>
+                                            <div className="grid grid-cols-3 gap-4 mb-10 px-2">
+                                                <div className="bg-sky-50/50 p-6 rounded-[2rem] border-2 border-sky-100 flex items-center gap-4">
+                                                    <div className="p-3 bg-white rounded-xl text-sky-500 shadow-sm"><Target className="w-6 h-6" /></div>
                                                     <div>
-                                                        <div className="text-[11px] font-black text-sky-500 uppercase mb-1 tracking-widest">Nivel</div>
-                                                        <div className="text-xl font-black text-slate-900">{ev.level}</div>
+                                                        <div className="text-[10px] font-black text-sky-500 uppercase mb-0.5 tracking-widest">Nivel</div>
+                                                        <div className="text-lg font-black text-slate-900">{ev.level}</div>
                                                     </div>
                                                 </div>
-                                                <div className="bg-amber-50/50 p-8 rounded-[2.5rem] border-2 border-amber-100 flex items-center gap-6">
-                                                    <div className="p-4 bg-white rounded-2xl text-amber-500 shadow-sm"><Building2 className="w-8 h-8" /></div>
+                                                <div className="bg-amber-50/50 p-6 rounded-[2rem] border-2 border-amber-100 flex items-center gap-4">
+                                                    <div className="p-3 bg-white rounded-xl text-amber-500 shadow-sm"><Building2 className="w-6 h-6" /></div>
                                                     <div className="overflow-hidden">
-                                                        <div className="text-[11px] font-black text-amber-500 uppercase mb-1 tracking-widest">Establecimiento</div>
-                                                        <div className="text-xl font-black text-slate-900 truncate">{ev.establishment || 'Educacional'}</div>
+                                                        <div className="text-[10px] font-black text-amber-500 uppercase mb-0.5 tracking-widest">Establecimiento</div>
+                                                        <div className="text-lg font-black text-slate-900 truncate">{ev.establishment || 'Educacional'}</div>
                                                     </div>
                                                 </div>
-                                                <div className="bg-emerald-50/50 p-8 rounded-[2.5rem] border-2 border-emerald-100 flex items-center gap-6">
-                                                    <div className="p-4 bg-white rounded-2xl text-emerald-500 shadow-sm"><Star className="w-8 h-8" /></div>
+                                                <div className="bg-emerald-50/50 p-6 rounded-[2rem] border-2 border-emerald-100 flex items-center gap-4">
+                                                    <div className="p-3 bg-white rounded-xl text-emerald-500 shadow-sm"><Star className="w-6 h-6" /></div>
                                                     <div>
-                                                        <div className="text-[11px] font-black text-emerald-500 uppercase mb-1 tracking-widest">Año/Período</div>
-                                                        <div className="text-xl font-black text-slate-900">{ev.year || '2026'}</div>
+                                                        <div className="text-[10px] font-black text-emerald-500 uppercase mb-0.5 tracking-widest">Año/Período</div>
+                                                        <div className="text-lg font-black text-slate-900">{ev.year || '2026'}</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -409,9 +409,9 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                             <div className="overflow-hidden rounded-[3rem] border-2 border-slate-100 bg-white mb-16 shadow-sm">
                                                 <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
                                                     <colgroup>
-                                                        <col style={{ width: '35%' }} />
+                                                        <col style={{ width: '30%' }} />
                                                         {(ev.child_ids || []).map((cid: string) => (
-                                                            <col key={cid} style={{ width: `${65 / Math.max(1, (ev.child_ids || []).length)}%` }} />
+                                                            <col key={cid} style={{ width: `${70 / Math.max(1, (ev.child_ids || []).length)}%` }} />
                                                         ))}
                                                     </colgroup>
                                                     <thead>
@@ -428,14 +428,17 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                             {(ev.child_ids || []).map((cid: string, idx: number) => {
                                                                 const childData = (children || []).find(c => c.id === cid);
                                                                 return (
-                                                                    <th key={cid} className="p-0 border border-slate-100 bg-white min-w-[40px] align-bottom relative h-32">
-                                                                        <div className="absolute top-0 inset-x-0 py-1.5 bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 text-center">{idx + 1}</div>
-                                                                        <div className="h-24 w-full flex items-center justify-center overflow-hidden">
-                                                                            <span className="text-[12px] font-black text-slate-700 uppercase tracking-tight whitespace-nowrap inline-block" 
+                                                                    <th key={cid} className="p-0 border border-slate-100 bg-white min-w-[30px] align-bottom relative h-32">
+                                                                        <div className="absolute top-0 inset-x-0 py-1 bg-slate-50/50 border-b border-slate-100 text-[9px] font-black text-slate-400 text-center">{idx + 1}</div>
+                                                                        <div className="h-full w-full flex items-center justify-center pt-6 overflow-hidden">
+                                                                            <span className="text-[11px] font-black text-slate-700 uppercase tracking-tight whitespace-nowrap" 
                                                                                   style={{ 
                                                                                       transform: 'rotate(-90deg)',
-                                                                                      width: '100px',
-                                                                                      textAlign: 'center'
+                                                                                      width: '120px',
+                                                                                      display: 'block',
+                                                                                      textAlign: 'center',
+                                                                                      marginLeft: '-45px',
+                                                                                      marginRight: '-45px'
                                                                                   }}>
                                                                                 {childData ? `${childData.firstName} ${childData.lastName[0]}.` : `Niño ${idx + 1}`}
                                                                             </span>
