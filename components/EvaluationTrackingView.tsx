@@ -9,7 +9,7 @@ interface EvaluationTrackingViewProps {
 }
 
 const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, evaluations, onBack }) => {
-    const childEvaluations = evaluations.filter(ev => ev.child_ids.includes(child.id));
+    const childEvaluations = evaluations.filter(ev => ev.child_ids?.includes(child.id));
 
     const exportToPDF = (evaluation: any) => {
         const element = document.getElementById(`pdf-eval-${evaluation.id}`);
@@ -80,7 +80,6 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                             {/* Contenido oculto para el PDF - Posicionado fuera de pantalla para que html2pdf pueda verlo */}
                             <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '210mm', background: 'white' }}>
                                 <div id={`pdf-eval-${ev.id}`} className="p-10 text-slate-800 font-sans shadow-none border-none">
-                                <div className="p-10 text-slate-800 font-sans">
                                     <div className="flex justify-between items-start mb-10 border-b-4 border-sky-500 pb-6">
                                         <div>
                                             <h1 className="text-3xl font-black text-sky-600 italic">Planifica</h1>
