@@ -280,6 +280,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
             {viewMode === 'tracking' && trackingChild ? (
                 <EvaluationTrackingView 
                     child={trackingChild} 
+                    children={children}
                     evaluations={evaluations} 
                     onBack={() => setTrackingChild(null)} 
                     onFetchEvaluations={onFetchEvaluations}
