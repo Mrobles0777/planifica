@@ -244,6 +244,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
                     child={trackingChild} 
                     evaluations={evaluations} 
                     onBack={() => setTrackingChild(null)} 
+                    onFetchEvaluations={onFetchEvaluations}
                 />
             ) : viewMode === 'new' ? (
                 /* Matriz de Evaluación */

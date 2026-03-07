@@ -1,14 +1,17 @@
-import React from 'react';
-import { ArrowLeft, Download, Calendar, Building2, User, ChevronRight, FileText } from 'lucide-react';
+import { ArrowLeft, Download, Calendar, Building2, User, ChevronRight, FileText, Trash2, Loader2 } from 'lucide-react';
 import { Child } from '../types';
+import { supabase } from '../supabaseClient';
+import { useState } from 'react';
 
 interface EvaluationTrackingViewProps {
     child: Child;
     evaluations: any[];
     onBack: () => void;
+    onFetchEvaluations: () => void;
 }
 
-const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, evaluations, onBack }) => {
+const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, evaluations, onBack, onFetchEvaluations }) => {
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const childEvaluations = evaluations.filter(ev => ev.child_ids?.includes(child.id));
 
     const exportToPDF = (evaluation: any) => {
@@ -25,6 +28,23 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
 
         // @ts-ignore
         html2pdf().set(opt).from(element).save();
+    };
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (!window.confirm("¿Estás seguro de que deseas eliminar esta evaluación? Esta acción no se puede deshacer.")) return;
+
+        setIsDeleting(id);
+        try {
+            const { error } = await supabase.from('evaluations').delete().eq('id', id);
+            if (error) throw error;
+            onFetchEvaluations();
+        } catch (err) {
+            console.error("Error deleting evaluation:", err);
+            alert("No se pudo eliminar la evaluación. Revisa tu conexión.");
+        } finally {
+            setIsDeleting(null);
+        }
     };
 
     return (
@@ -68,13 +88,23 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                         <h4 className="text-lg font-black text-slate-700">{ev.establishment || "Sin Establecimiento"}</h4>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => exportToPDF(ev)}
-                                    className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-sky-100 transition-all active:scale-95 whitespace-nowrap"
-                                >
-                                    <Download className="w-5 h-5" />
-                                    Descargar PDF
-                                </button>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => exportToPDF(ev)}
+                                        className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-sky-100 transition-all active:scale-95 whitespace-nowrap"
+                                    >
+                                        <Download className="w-5 h-5" />
+                                        PDF
+                                    </button>
+                                    <button
+                                        onClick={(e) => handleDelete(e, ev.id)}
+                                        disabled={isDeleting === ev.id}
+                                        className="p-4 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all disabled:opacity-50"
+                                        title="Eliminar Evaluación"
+                                    >
+                                        {isDeleting === ev.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Contenido oculto para el PDF - Posicionado fuera de pantalla para que html2pdf pueda verlo */}
