@@ -3,7 +3,7 @@ import { supabase } from "../supabaseClient";
 
 // Modelo principal estable; gemini-2.0-flash tiene disponibilidad general y soporte full de responseSchema en v1beta.
 // Cambia esta constante si el usuario tiene acceso a un modelo más reciente.
-const DEFAULT_GEMINI_MODEL = "gemini-2.0-flash";
+const DEFAULT_GEMINI_MODEL = "gemini-3.0-flash";
 
 // Timeout en el cliente para que el botón nunca se quede bloqueado indefinidamente.
 const CLIENT_TIMEOUT_MS = 55_000;
