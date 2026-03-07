@@ -202,6 +202,7 @@ const App: React.FC = () => {
         console.error("Auth state change error:", err);
       } finally {
         setIsInitializing(false);
+        setIsAuthLoading(false); // Safety reset for spinner on any auth change
       }
     });
 
@@ -294,28 +295,33 @@ const App: React.FC = () => {
       if (error) throw error;
     } catch (err: any) {
       setErrorMessage(err.message);
+    } finally {
       setIsAuthLoading(false);
     }
   };
 
   const handleLogout = useCallback(async () => {
+    setIsAuthLoading(true);
     try {
-      setIsAuthLoading(true);
-      // Primero limpiamos el estado local para respuesta inmediata
+      // 1. Limpieza inmediata del estado (UI Reactiva)
       setUser(null);
-      setSession(null);
       setSavedItems([]);
       setChildren([]);
       setEvaluations([]);
       resetForm();
       setView('login');
       
-      // Luego cerramos sesión en Supabase
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // 2. Cierre de sesión en Supabase (con timeout de seguridad)
+      const logoutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Logout timeout')), 2000)
+      );
+
+      await Promise.race([logoutPromise, timeoutPromise]);
     } catch (err) {
-      console.error("Logout error:", err);
-      // Si falla signOut, al menos el usuario ya está en login localmente
+      console.error("Resilient Logout:", err);
+      // Forzamos el estado de sesión a null localmente si falla o hay timeout
+      setSession(null); 
     } finally {
       setIsAuthLoading(false);
     }

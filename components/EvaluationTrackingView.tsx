@@ -656,6 +656,54 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                 </div>
                             </div>
 
+                            {/* Detailed Nucleo Breakdown for ALL Ambitos */}
+                            <div className="html2pdf__page-break"></div>
+                            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-widest italic mb-12 flex items-center gap-6">
+                                <div className="w-12 h-px bg-slate-200"></div>
+                                Desglose por Núcleos (Análisis Técnico)
+                                <div className="flex-1 h-px bg-slate-200"></div>
+                            </h3>
+
+                            <div className="space-y-16">
+                                {ambitos.map(amb => {
+                                    const stats = calculateStats(childEvaluations)[amb];
+                                    if (!stats || stats.total === 0) return null;
+                                    return (
+                                        <div key={amb} className="pdf-block bg-white p-12 rounded-[5rem] border-4 border-slate-100 shadow-sm overflow-hidden">
+                                            <div className="flex justify-between items-center mb-10 pb-6 border-b-4 border-slate-50">
+                                                <h4 className="text-2xl font-black text-slate-800 italic uppercase">{amb}</h4>
+                                                <span className="bg-sky-50 text-sky-600 px-6 py-2 rounded-2xl font-black text-xs border-2 border-sky-100">
+                                                    {((stats.L / stats.total) * 100).toFixed(0)}% ÉXITO
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-10">
+                                                {Object.entries(stats.nucleos).map(([name, ns]: any) => {
+                                                    const lp = (ns.L / (ns.total || 1)) * 100;
+                                                    return (
+                                                        <div key={name} className="space-y-4">
+                                                            <div className="flex justify-between items-end">
+                                                                <p className="text-lg font-black text-slate-700 italic uppercase">{name}</p>
+                                                                <p className="text-[11px] font-black text-slate-400">{ns.total} Muestras</p>
+                                                            </div>
+                                                            <div className="h-6 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                                                                <div style={{ width: `${lp}%` }} className="h-full bg-sky-500 shadow-[inset_-4px_0_8px_rgba(0,0,0,0.1)]"></div>
+                                                            </div>
+                                                            <div className="flex justify-between text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                                                                <span>Logrado (L): {lp.toFixed(0)}%</span>
+                                                                <div className="flex gap-4">
+                                                                    <span>ML: {((ns.ML / (ns.total || 1)) * 100).toFixed(0)}%</span>
+                                                                    <span>N/O: {((ns['N/O'] / (ns.total || 1)) * 100).toFixed(0)}%</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
                             {/* Chronological History List */}
                             <div className="html2pdf__page-break"></div>
                             <h3 className="text-2xl font-black text-slate-900 uppercase tracking-widest italic mb-12 flex items-center gap-6">
