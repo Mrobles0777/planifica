@@ -41,6 +41,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
     const [selectedObjectives, setSelectedObjectives] = useState<Objective[]>([]);
 
     const [trackingChild, setTrackingChild] = useState<Child | null>(null);
+    const [isGeneralTracking, setIsGeneralTracking] = useState(false);
     const [sessionData, setSessionData] = useState<Partial<EvaluationSession>>({
         establishment: '',
         rbd: '',
@@ -257,14 +258,14 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {viewMode === 'tracking' && (
                             <button
-                                onClick={() => setTrackingChild(null)}
+                                onClick={() => setIsGeneralTracking(true)}
                                 className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${
-                                    trackingChild === null
+                                    isGeneralTracking
                                         ? 'bg-slate-900 border-slate-800 text-white shadow-lg'
                                         : 'bg-white border-slate-50 text-slate-400 hover:border-slate-200'
                                     }`}
                             >
-                                <Target className={`w-8 h-8 ${trackingChild === null ? 'text-sky-400' : 'text-slate-200 group-hover:text-sky-200'}`} />
+                                <Target className={`w-8 h-8 ${isGeneralTracking ? 'text-sky-400' : 'text-slate-200 group-hover:text-sky-200'}`} />
                                 <span className="text-[10px] font-black uppercase truncate w-full text-center">General Clase</span>
                             </button>
                         )}
@@ -292,12 +293,15 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                 )}
             </div>
 
-            {viewMode === 'tracking' && trackingChild ? (
+            {viewMode === 'tracking' && (trackingChild || isGeneralTracking) ? (
                 <EvaluationTrackingView 
                     child={trackingChild} 
                     children={children}
                     evaluations={evaluations} 
-                    onBack={() => setTrackingChild(null)} 
+                    onBack={() => {
+                        setTrackingChild(null);
+                        setIsGeneralTracking(false);
+                    }} 
                     onFetchEvaluations={onFetchEvaluations}
                 />
             ) : viewMode === 'new' && isConfiguring ? (
