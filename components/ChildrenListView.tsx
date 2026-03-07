@@ -16,8 +16,8 @@ interface ChildrenListViewProps {
 
 const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, setChildren, session }) => {
     const [showForm, setShowForm] = useState(false);
-
     const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -78,7 +78,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                     createdAt: data.created_at
                 };
                 setChildren([newChild, ...children]);
-                setShowForm(false);
+                // Mantenemos showForm en true para seguir agregando
                 setFormData({
                     firstName: '',
                     lastName: '',
@@ -88,7 +88,8 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                     allergies: '',
                     otherInfo: ''
                 });
-                alert("¡Niño/a agregado/a con éxito!");
+                setSaveSuccess(true);
+                setTimeout(() => setSaveSuccess(false), 3000);
             }
         } catch (err: any) {
             console.error("Error adding child:", err);
@@ -261,7 +262,13 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                         </div>
                     </div>
 
-                    <div className="flex justify-end pt-4">
+                    <div className="flex flex-col md:flex-row items-center justify-end gap-4 pt-4">
+                        {saveSuccess && (
+                            <div className="flex items-center gap-2 text-emerald-600 font-black text-sm animate-in fade-in slide-in-from-right-4">
+                                <CheckCircle2 className="w-5 h-5" />
+                                Registrado con éxito
+                            </div>
+                        )}
                         <button
                             type="submit"
                             disabled={isSaving}
@@ -275,7 +282,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                             ) : (
                                 <>
                                     <UserPlus className="w-6 h-6" />
-                                    Guardar en Listado
+                                    Guardar y Agregar Otro
                                 </>
                             )}
                         </button>
