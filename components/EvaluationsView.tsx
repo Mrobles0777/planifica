@@ -240,77 +240,107 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                 </div>
             </div>
 
-            {/* Selección de Niños */}
-            <div className="bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border-4 border-slate-50 space-y-6">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black text-sky-500 uppercase tracking-[0.3em] flex items-center gap-2">
-                        <Baby className="w-4 h-4" />
-                        {viewMode === 'new' ? 'Niños/as en Evaluación' : 'Selecciona para ver Seguimiento'}
-                    </h3>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setViewMode('new')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${viewMode === 'new' ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
-                        >
-                            Nueva
-                        </button>
-                        <button
-                            onClick={() => setViewMode('tracking')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${viewMode === 'tracking' ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
-                        >
-                            Seguimiento
-                        </button>
-                    </div>
-                </div>
+            {/* Selección de Niños filtrados por el nivel elegido en Info General */}
+            {(() => {
+                // Filtrar según nivel seleccionado; en modo tracking mostramos todos
+                const levelFilter = sessionData.level as string;
+                const filteredChildren = levelFilter
+                    ? children.filter(c => c.level === levelFilter)
+                    : children;
 
-                {children.length === 0 ? (
-                    <div className="p-10 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-100 text-center space-y-3">
-                        <UserPlus className="w-10 h-10 text-slate-300 mx-auto" />
-                        <p className="text-slate-400 font-bold">No hay niños en el Listado Base</p>
-                        <button onClick={() => setView('children-list')} className="text-sky-500 font-black text-xs uppercase tracking-widest hover:underline">
-                            Ir a Listado Base
-                        </button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {viewMode === 'tracking' && (
-                            <button
-                                onClick={() => {
-                                    setIsGeneralTracking(true);
-                                    setTrackingChild(null);
-                                }}
-                                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${isGeneralTracking
-                                    ? 'bg-slate-900 border-slate-800 text-white shadow-lg'
-                                    : 'bg-white border-slate-50 text-slate-400 hover:border-slate-200'
-                                    }`}
-                            >
-                                <Target className={`w-8 h-8 ${isGeneralTracking ? 'text-sky-400' : 'text-slate-200 group-hover:text-sky-200'}`} />
-                                <span className="text-[10px] font-black uppercase truncate w-full text-center">General Clase</span>
-                            </button>
+                const headerLabel = viewMode === 'new'
+                    ? `Niños/as en Evaluación${levelFilter ? ` · ${levelFilter}` : ''}`
+                    : 'Selecciona para ver Seguimiento';
+
+                return (
+                    <div className="bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border-4 border-slate-50 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-black text-sky-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                                <Baby className="w-4 h-4" />
+                                {headerLabel}
+                            </h3>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setViewMode('new')}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${viewMode === 'new' ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                                >
+                                    Nueva
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('tracking')}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${viewMode === 'tracking' ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                                >
+                                    Seguimiento
+                                </button>
+                            </div>
+                        </div>
+
+                        {children.length === 0 ? (
+                            <div className="p-10 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-100 text-center space-y-3">
+                                <UserPlus className="w-10 h-10 text-slate-300 mx-auto" />
+                                <p className="text-slate-400 font-bold">No hay niños en el Listado Base</p>
+                                <button onClick={() => setView('children-list')} className="text-sky-500 font-black text-xs uppercase tracking-widest hover:underline">
+                                    Ir a Listado Base
+                                </button>
+                            </div>
+                        ) : filteredChildren.length === 0 && viewMode === 'new' ? (
+                            <div className="p-10 bg-amber-50 rounded-[2rem] border-2 border-dashed border-amber-100 text-center space-y-3">
+                                <GraduationCap className="w-10 h-10 text-amber-300 mx-auto" />
+                                <p className="text-amber-600 font-bold">No hay niños/as con nivel <span className="font-black">{levelFilter}</span></p>
+                                <p className="text-amber-400 text-xs font-bold">Verifica el nivel en Información General o agrega alumnos con ese nivel.</p>
+                                <button onClick={() => setView('children-list')} className="text-sky-500 font-black text-xs uppercase tracking-widest hover:underline">
+                                    Ir a Listado Base
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {viewMode === 'tracking' && (
+                                    <button
+                                        onClick={() => {
+                                            setIsGeneralTracking(true);
+                                            setTrackingChild(null);
+                                        }}
+                                        className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${isGeneralTracking
+                                            ? 'bg-slate-900 border-slate-800 text-white shadow-lg'
+                                            : 'bg-white border-slate-50 text-slate-400 hover:border-slate-200'
+                                            }`}
+                                    >
+                                        <Target className={`w-8 h-8 ${isGeneralTracking ? 'text-sky-400' : 'text-slate-200 group-hover:text-sky-200'}`} />
+                                        <span className="text-[10px] font-black uppercase truncate w-full text-center">General Clase</span>
+                                    </button>
+                                )}
+                                {(viewMode === 'new' ? filteredChildren : children).map(child => {
+                                    const isSelected = (viewMode === 'new' && selectedChildIds.includes(child.id)) || (viewMode === 'tracking' && trackingChild?.id === child.id);
+                                    return (
+                                        <button
+                                            key={child.id}
+                                            onClick={() => {
+                                                if (viewMode === 'new') {
+                                                    toggleChildSelection(child.id);
+                                                } else {
+                                                    setTrackingChild(child);
+                                                    setIsGeneralTracking(false);
+                                                }
+                                            }}
+                                            className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-1 group ${isSelected
+                                                    ? (viewMode === 'new' ? 'bg-rose-500 border-rose-400 text-white shadow-lg' : 'bg-sky-500 border-sky-400 text-white shadow-lg')
+                                                    : 'bg-white border-slate-50 text-slate-400 hover:border-sky-100'
+                                                }`}
+                                        >
+                                            <Baby className={`w-8 h-8 ${isSelected ? 'text-white' : 'text-slate-200 group-hover:text-sky-200'}`} />
+                                            <span className="text-[10px] font-black uppercase truncate w-full text-center">{child.firstName}</span>
+                                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${isSelected
+                                                    ? 'bg-white/20 text-white'
+                                                    : 'bg-slate-100 text-slate-400'
+                                                }`}>{child.level}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         )}
-                        {children.map(child => (
-                            <button
-                                key={child.id}
-                                onClick={() => {
-                                    if (viewMode === 'new') {
-                                        toggleChildSelection(child.id);
-                                    } else {
-                                        setTrackingChild(child);
-                                        setIsGeneralTracking(false);
-                                    }
-                                }}
-                                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${(viewMode === 'new' && selectedChildIds.includes(child.id)) || (viewMode === 'tracking' && trackingChild?.id === child.id)
-                                    ? (viewMode === 'new' ? 'bg-rose-500 border-rose-400 text-white shadow-lg' : 'bg-sky-500 border-sky-400 text-white shadow-lg')
-                                    : 'bg-white border-slate-50 text-slate-400 hover:border-sky-100'
-                                    }`}
-                            >
-                                <Baby className={`w-8 h-8 ${((viewMode === 'new' && selectedChildIds.includes(child.id)) || (viewMode === 'tracking' && trackingChild?.id === child.id)) ? 'text-white' : 'text-slate-200 group-hover:text-sky-200'}`} />
-                                <span className="text-[10px] font-black uppercase truncate w-full text-center">{child.firstName}</span>
-                            </button>
-                        ))}
                     </div>
-                )}
-            </div>
+                );
+            })()}
 
             {viewMode === 'tracking' && (trackingChild || isGeneralTracking) ? (
                 <EvaluationTrackingView
