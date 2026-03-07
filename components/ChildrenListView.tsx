@@ -17,6 +17,7 @@ interface ChildrenListViewProps {
 const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, setChildren, session }) => {
     const [showForm, setShowForm] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [formData, setFormData] = useState({
         firstName: '',
@@ -104,18 +105,28 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
     };
 
     const deleteChild = async (id: string) => {
-        if (window.confirm('¿Borrar registro de forma permanente?')) {
+        if (!session?.user?.id) {
+            alert("Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.");
+            return;
+        }
+
+        if (window.confirm('¿Borrar registro de forma permanente? Esta acción no se puede deshacer.')) {
+            setIsDeleting(id);
             try {
                 const { error } = await supabase
                     .from('children')
                     .delete()
-                    .eq('id', id);
+                    .eq('id', id)
+                    .eq('user_id', session.user.id); // Seguridad extra
 
                 if (error) throw error;
-                setChildren(children.filter(c => c.id !== id));
-            } catch (err) {
+                
+                setChildren(prev => prev.filter(c => c.id !== id));
+            } catch (err: any) {
                 console.error("Error deleting child:", err);
-                alert("No se pudo eliminar el registro.");
+                alert(`Error al eliminar: ${err.message || "No tienes permisos o el registro ya no existe."}`);
+            } finally {
+                setIsDeleting(null);
             }
         }
     };
@@ -324,9 +335,15 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                                 </div>
                                 <button
                                     onClick={() => deleteChild(child.id)}
-                                    className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                                    disabled={isDeleting === child.id}
+                                    className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all disabled:opacity-50"
+                                    title="Eliminar Alumno"
                                 >
-                                    <Trash2 className="w-5 h-5" />
+                                    {isDeleting === child.id ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="w-5 h-5" />
+                                    )}
                                 </button>
                             </div>
 
