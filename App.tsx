@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Loader2, Star, Target, Calendar, User as UserIcon } from 'lucide-react';
-import { Level, GeneratedAssessment, Nucleo, Objective, Methodology, Planning, User, Child } from './types';
+import { Level, ChildLevel, GeneratedAssessment, Nucleo, Objective, Methodology, Planning, User, Child } from './types';
 import { CURRICULUM_DATA } from './constants';
 import { generateAssessmentDetails, generateVariablePlanning, generateGlobalPlanning } from './services/geminiService';
 import { supabase, testSupabaseConnection } from './supabaseClient';
@@ -99,7 +99,7 @@ const App: React.FC = () => {
           firstName: item.first_name,
           lastName: item.last_name,
           birthDate: item.birth_date,
-          level: item.level as Level,
+          level: item.level as ChildLevel,
           vaccines: item.vaccines,
           allergies: item.allergies,
           otherInfo: item.other_info,
@@ -296,7 +296,7 @@ const App: React.FC = () => {
         }
       });
       if (error) throw error;
-      
+
       // Si la librería no redirige automáticamente por alguna razón de entorno, forzamos la navegación
       if (data?.url) {
         window.location.assign(data.url);
@@ -318,10 +318,10 @@ const App: React.FC = () => {
       setEvaluations([]);
       resetForm();
       setView('login');
-      
+
       // 2. Cierre de sesión en Supabase (con timeout de seguridad)
       const logoutPromise = supabase.auth.signOut();
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Logout timeout')), 2000)
       );
 
@@ -329,7 +329,7 @@ const App: React.FC = () => {
     } catch (err) {
       console.error("Resilient Logout:", err);
       // Forzamos el estado de sesión a null localmente si falla o hay timeout
-      setSession(null); 
+      setSession(null);
     } finally {
       setIsAuthLoading(false);
     }
@@ -718,10 +718,10 @@ const App: React.FC = () => {
         )}
 
         {view === 'evaluations' && (
-          <EvaluationsView 
-            setView={handleViewChange} 
-            children={children} 
-            session={session} 
+          <EvaluationsView
+            setView={handleViewChange}
+            children={children}
+            session={session}
             evaluations={evaluations}
             onFetchEvaluations={fetchEvaluations}
             groupedData={groupedData}

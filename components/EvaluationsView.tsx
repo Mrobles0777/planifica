@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Target, ArrowLeft, Save, UserPlus, Baby, GraduationCap, Calendar, Building2, Hash, Sparkles, User, ChevronRight, ChevronDown, CheckCircle2, ListChecks, Loader2 } from 'lucide-react';
-import { Level, Child, EvaluationSession, EvaluationIndicator, AchievementLevel, Nucleo, Objective } from '../types';
+import { Level, Child, EvaluationSession, EvaluationIndicator, AchievementLevel, Nucleo, Objective, ChildLevel, CHILD_LEVEL_GROUPS } from '../types';
 import { supabase } from '../supabaseClient';
 import EvaluationTrackingView from './EvaluationTrackingView';
 
@@ -21,11 +21,11 @@ interface EvaluationsViewProps {
     toggleAmbito: (ambito: string) => void;
 }
 
-const EvaluationsView: React.FC<EvaluationsViewProps> = ({ 
-    setView, 
-    children, 
-    session, 
-    evaluations, 
+const EvaluationsView: React.FC<EvaluationsViewProps> = ({
+    setView,
+    children,
+    session,
+    evaluations,
     onFetchEvaluations,
     groupedData,
     expandedAmbito,
@@ -34,7 +34,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
     const [isSaving, setIsSaving] = useState(false);
     const [viewMode, setViewMode] = useState<'new' | 'tracking'>('new');
     const [isConfiguring, setIsConfiguring] = useState(true);
-    
+
     // Estados de Selección Curricular
     const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
     const [selectedNucleo, setSelectedNucleo] = useState<Nucleo | null>(null);
@@ -45,7 +45,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
     const [sessionData, setSessionData] = useState<Partial<EvaluationSession>>({
         establishment: '',
         rbd: '',
-        level: '1° Transición',
+        level: ChildLevel.SC_MENOR,
         year: '2026',
         childIds: [],
         indicators: []
@@ -60,7 +60,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
     };
 
     const toggleChildSelection = (id: string) => {
-        setSelectedChildIds(prev => 
+        setSelectedChildIds(prev =>
             prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
         );
     };
@@ -201,14 +201,21 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                     </div>
                     <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Nivel</label>
-                        <select
-                            className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-rose-400 focus:bg-white transition-all outline-none font-bold text-slate-700 appearance-none"
-                            value={sessionData.level}
-                            onChange={e => handleInfoChange('level', e.target.value)}
-                        >
-                            <option>1° Transición</option>
-                            <option>2° Transición</option>
-                        </select>
+                        <div className="relative">
+                            <select
+                                className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-rose-400 focus:bg-white transition-all outline-none font-bold text-slate-700 appearance-none"
+                                value={sessionData.level}
+                                onChange={e => handleInfoChange('level', e.target.value)}
+                            >
+                                {CHILD_LEVEL_GROUPS.map(group => (
+                                    <optgroup key={group.label} label={group.label}>
+                                        {group.options.map(opt => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                    </optgroup>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Año Escolar</label>
@@ -231,13 +238,13 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                         {viewMode === 'new' ? 'Niños/as en Evaluación' : 'Selecciona para ver Seguimiento'}
                     </h3>
                     <div className="flex gap-2">
-                        <button 
+                        <button
                             onClick={() => setViewMode('new')}
                             className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${viewMode === 'new' ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
                         >
                             Nueva
                         </button>
-                        <button 
+                        <button
                             onClick={() => setViewMode('tracking')}
                             className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${viewMode === 'tracking' ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
                         >
@@ -262,8 +269,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                                     setIsGeneralTracking(true);
                                     setTrackingChild(null);
                                 }}
-                                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${
-                                    isGeneralTracking
+                                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${isGeneralTracking
                                         ? 'bg-slate-900 border-slate-800 text-white shadow-lg'
                                         : 'bg-white border-slate-50 text-slate-400 hover:border-slate-200'
                                     }`}
@@ -283,8 +289,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                                         setIsGeneralTracking(false);
                                     }
                                 }}
-                                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${
-                                    (viewMode === 'new' && selectedChildIds.includes(child.id)) || (viewMode === 'tracking' && trackingChild?.id === child.id)
+                                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${(viewMode === 'new' && selectedChildIds.includes(child.id)) || (viewMode === 'tracking' && trackingChild?.id === child.id)
                                         ? (viewMode === 'new' ? 'bg-rose-500 border-rose-400 text-white shadow-lg' : 'bg-sky-500 border-sky-400 text-white shadow-lg')
                                         : 'bg-white border-slate-50 text-slate-400 hover:border-sky-100'
                                     }`}
@@ -298,14 +303,14 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
             </div>
 
             {viewMode === 'tracking' && (trackingChild || isGeneralTracking) ? (
-                <EvaluationTrackingView 
-                    child={trackingChild} 
+                <EvaluationTrackingView
+                    child={trackingChild}
                     children={children}
-                    evaluations={evaluations} 
+                    evaluations={evaluations}
                     onBack={() => {
                         setTrackingChild(null);
                         setIsGeneralTracking(false);
-                    }} 
+                    }}
                     onFetchEvaluations={onFetchEvaluations}
                 />
             ) : viewMode === 'new' && isConfiguring ? (
@@ -366,14 +371,14 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                             <div className="flex items-center justify-between ml-4">
                                 <label className="text-[11px] font-black text-emerald-500 uppercase tracking-widest">3. Objetivos de Aprendizaje</label>
                                 <div className="flex gap-2">
-                                    <button 
+                                    <button
                                         onClick={selectAllObjectives}
                                         className="text-[10px] font-black text-emerald-600 hover:underline uppercase tracking-tighter"
                                     >
                                         Seleccionar Todos
                                     </button>
                                     <span className="text-slate-300">|</span>
-                                    <button 
+                                    <button
                                         onClick={deselectAllObjectives}
                                         className="text-[10px] font-black text-slate-400 hover:underline uppercase tracking-tighter"
                                     >
@@ -415,14 +420,14 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                         </div>
                     )}
                 </div>
-                ) : viewMode === 'new' ? (
-                   /* Matriz de Evaluación Nueva (Refinada) */
+            ) : viewMode === 'new' ? (
+                /* Matriz de Evaluación Nueva (Refinada) */
                 <div className="bg-white p-8 md:p-10 rounded-[4rem] shadow-2xl border-4 border-rose-50 space-y-8 overflow-hidden">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-3 bg-rose-100 rounded-2xl flex items-center gap-2">
                                 <Sparkles className="w-5 h-5 text-rose-600" />
-                                <button 
+                                <button
                                     onClick={() => setIsConfiguring(true)}
                                     className="text-[10px] font-black uppercase text-rose-500 hover:underline"
                                 >
@@ -446,7 +451,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                                             <div className="absolute bottom-4 left-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Nombres</div>
                                             <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top right, transparent calc(50% - 1px), #e2e8f0, transparent calc(50% + 1px))' }}></div>
                                         </th>
-                                        
+
                                         {/* Números y Nombres de Niños */}
                                         {children.filter(c => selectedChildIds.includes(c.id)).map((child, index) => (
                                             <th key={child.id} className="p-0 border-b-2 border-r border-slate-200 bg-white min-w-[70px]">
@@ -478,12 +483,11 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                                                     <select
                                                         value={evalMatrix[obj.id]?.[child.id] || ''}
                                                         onChange={(e) => handleEvalChange(child.id, obj.id.toString(), e.target.value)}
-                                                        className={`w-full p-2.5 rounded-xl text-[11px] font-black border-2 transition-all outline-none appearance-none text-center cursor-pointer hover:shadow-md ${
-                                                            evalMatrix[obj.id]?.[child.id] === 'L' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' :
-                                                            evalMatrix[obj.id]?.[child.id] === 'ML' ? 'bg-amber-50 border-amber-300 text-amber-700' :
-                                                            evalMatrix[obj.id]?.[child.id] === 'N/O' ? 'bg-slate-100 border-slate-300 text-slate-600' :
-                                                            'bg-slate-50 border-slate-100 text-slate-400'
-                                                        }`}
+                                                        className={`w-full p-2.5 rounded-xl text-[11px] font-black border-2 transition-all outline-none appearance-none text-center cursor-pointer hover:shadow-md ${evalMatrix[obj.id]?.[child.id] === 'L' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' :
+                                                                evalMatrix[obj.id]?.[child.id] === 'ML' ? 'bg-amber-50 border-amber-300 text-amber-700' :
+                                                                    evalMatrix[obj.id]?.[child.id] === 'N/O' ? 'bg-slate-100 border-slate-300 text-slate-600' :
+                                                                        'bg-slate-50 border-slate-100 text-slate-400'
+                                                            }`}
                                                     >
                                                         <option value="">-</option>
                                                         {EVAL_MODES.map(mode => (

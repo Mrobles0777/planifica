@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Plus, Baby, Calendar, GraduationCap, Info, Syringe, AlertCircle, Trash2, UserPlus, CheckCircle2, Loader2 } from 'lucide-react';
-import { Child, Level } from '../types';
+import { Child, Level, ChildLevel, CHILD_LEVEL_GROUPS } from '../types';
 import { supabase } from '../supabaseClient';
 
 /**
@@ -31,7 +31,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
         firstName: '',
         lastName: '',
         birthDate: '',
-        level: Level.SALA_CUNA,
+        level: ChildLevel.SC_MENOR,
         vaccines: '',
         allergies: '',
         otherInfo: ''
@@ -47,7 +47,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
 
     const handleAddChild = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!session?.user?.id) {
             alert("Sesión no válida. Por favor, vuelve a iniciar sesión.");
             return;
@@ -91,7 +91,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                 firstName: data.first_name,
                 lastName: data.last_name,
                 birthDate: data.birth_date,
-                level: data.level as Level,
+                level: data.level as ChildLevel,
                 vaccines: data.vaccines,
                 allergies: data.allergies,
                 otherInfo: data.other_info,
@@ -102,7 +102,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                 firstName: '',
                 lastName: '',
                 birthDate: '',
-                level: Level.SALA_CUNA,
+                level: ChildLevel.SC_MENOR,
                 vaccines: '',
                 allergies: '',
                 otherInfo: ''
@@ -138,7 +138,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                     .eq('user_id', session.user.id); // Seguridad extra
 
                 if (error) throw error;
-                
+
                 setChildren(prev => prev.filter(c => c.id !== id));
             } catch (err: any) {
                 console.error("Error deleting child:", err);
@@ -239,10 +239,14 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                                         <select
                                             className="w-full pl-14 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-sky-400 focus:bg-white transition-all outline-none font-bold text-slate-700 appearance-none"
                                             value={formData.level}
-                                            onChange={e => setFormData({ ...formData, level: e.target.value as Level })}
+                                            onChange={e => setFormData({ ...formData, level: e.target.value as ChildLevel })}
                                         >
-                                            {Object.values(Level).map(l => (
-                                                <option key={l} value={l}>{l.split('(')[0]}</option>
+                                            {CHILD_LEVEL_GROUPS.map(group => (
+                                                <optgroup key={group.label} label={group.label}>
+                                                    {group.options.map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </optgroup>
                                             ))}
                                         </select>
                                     </div>

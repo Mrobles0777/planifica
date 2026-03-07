@@ -5,6 +5,38 @@ export enum Level {
   TRANSICION = 'Tercer Nivel (Transición)'
 }
 
+/** Subniveles administrativos para el perfil de cada niño/a. */
+export enum ChildLevel {
+  SC_MENOR = 'Sala Cuna Menor',
+  SC_1 = 'SC+1',
+  SC_2 = 'SC+2',
+  M_1 = 'M-1',
+  M_2 = 'M-2',
+  M_MAYOR_1 = 'M+1',
+  M_MAYOR_2 = 'M+2',
+}
+
+/** Agrupación de subniveles para el selector con optgroup. */
+export const CHILD_LEVEL_GROUPS: { label: string; options: ChildLevel[] }[] = [
+  {
+    label: 'Sala Cuna Menor',
+    options: [ChildLevel.SC_MENOR]
+  },
+  {
+    label: 'Sala Cuna',
+    options: [ChildLevel.SC_1, ChildLevel.SC_2]
+  },
+  {
+    label: 'Medio Menor',
+    options: [ChildLevel.M_1, ChildLevel.M_2]
+  },
+  {
+    label: 'Medio Mayor',
+    options: [ChildLevel.M_MAYOR_1, ChildLevel.M_MAYOR_2]
+  },
+];
+
+
 export enum Methodology {
   STANDARD = 'Estándar (BCEP)',
   WALDORF = 'Inspiración Waldorf',
@@ -81,7 +113,7 @@ export interface Child {
   firstName: string;
   lastName: string;
   birthDate: string;
-  level: Level;
+  level: ChildLevel;
   vaccines?: string;
   allergies?: string;
   otherInfo?: string;
