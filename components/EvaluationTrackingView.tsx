@@ -23,26 +23,51 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
 
     const childEvaluations = (evaluations || []).filter(ev => ev.child_ids?.includes(child.id));
 
-    const exportToPDF = (evaluation: any, type: 'individual' | 'general' = 'individual') => {
-        const elementId = type === 'individual' ? `pdf-eval-${evaluation.id}` : `pdf-matrix-${evaluation.id}`;
-        const element = document.getElementById(elementId);
-        if (!element) return;
-
-        const isLandscape = type === 'general';
-        const opt = {
-            margin: 10,
-            filename: `${type === 'individual' ? 'Evaluacion' : 'Matriz'}_${child.firstName}_${new Date(evaluation.created_at).toLocaleDateString()}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: isLandscape ? 'landscape' : 'portrait' 
+    const exportToPDF = async (evaluation: any, type: 'individual' | 'general' = 'individual') => {
+        try {
+            const elementId = type === 'individual' ? `pdf-eval-${evaluation.id}` : `pdf-matrix-${evaluation.id}`;
+            const element = document.getElementById(elementId);
+            
+            if (!element) {
+                console.error(`Element not found: ${elementId}`);
+                // Intentar una segunda vez por si el ID tiene problemas con caracteres especiales (aunque sean UUIDs)
+                return;
             }
-        };
 
-        // @ts-ignore
-        html2pdf().set(opt).from(element).save();
+            const isLandscape = type === 'general';
+            const dateStr = new Date(evaluation.created_at).toLocaleDateString('es-CL').replace(/\//g, '-');
+            const fileName = `${type === 'individual' ? 'Evaluacion' : 'Matriz'}_${child.firstName}_${dateStr}.pdf`;
+
+            const opt = {
+                margin: 0,
+                filename: fileName,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: isLandscape ? 'landscape' : 'portrait' 
+                },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            // @ts-ignore
+            if (typeof html2pdf === 'undefined') {
+                alert("La librería PDF no está lista. Por favor, espera un momento o refresca la página.");
+                return;
+            }
+
+            // @ts-ignore
+            await html2pdf().set(opt).from(element).save();
+        } catch (err) {
+            console.error("Error al exportar PDF:", err);
+            alert("No se pudo generar el PDF. Revisa la consola para más detalles.");
+        }
     };
 
     const handleDelete = async (e: React.MouseEvent, id: string) => {
@@ -232,9 +257,9 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                     )}
                                 </div>
 
-                                {/* Contenido oculto para el PDF */}
-                                <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '210mm', background: 'white' }}>
-                                    <div id={`pdf-eval-${ev.id}`} className="p-10 text-slate-800 font-sans shadow-none border-none">
+                                {/* Contenedores para PDF (Ocultos) */}
+                                <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '210mm', background: 'white', pointerEvents: 'none' }} aria-hidden="true">
+                                    <div id={`pdf-eval-${ev.id}`} className="p-10 text-slate-800 font-sans bg-white">
                                         <div className="flex justify-between items-start mb-10 border-b-4 border-sky-500 pb-6">
                                             <div>
                                                 <h1 className="text-3xl font-black text-sky-600 italic">Planifica</h1>
@@ -309,9 +334,8 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                     </div>
                                 </div>
 
-                                {/* Contenido oculto para el PDF de la MATRIZ GENERAL */}
-                                <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '297mm', background: 'white' }}>
-                                    <div id={`pdf-matrix-${ev.id}`} className="p-10 text-slate-800 font-sans shadow-none border-none">
+                                <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '297mm', background: 'white', pointerEvents: 'none' }} aria-hidden="true">
+                                    <div id={`pdf-matrix-${ev.id}`} className="p-10 text-slate-800 font-sans bg-white">
                                         <div className="flex justify-between items-start mb-10 border-b-4 border-rose-500 pb-6">
                                             <div>
                                                 <h1 className="text-4xl font-black text-rose-600 italic">Planifica</h1>
