@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Download, Calendar, Building2, User, ChevronRight, FileText, Trash2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Calendar, Building2, User, ChevronRight, FileText, Trash2, Loader2, Star, Target } from 'lucide-react';
 import { Child } from '../types';
 import { supabase } from '../supabaseClient';
 
@@ -261,102 +261,97 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
 
                                 {/* Contenedores para PDF (Ocultos pero con Estilo Premium) */}
                                 <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '210mm', pointerEvents: 'none' }} aria-hidden="true">
-                                    <div id={`pdf-eval-${ev.id}`} className="bg-white text-slate-800 font-sans">
-                                        {/* Header Premium Individual */}
-                                        <div className="relative h-48 bg-gradient-to-r from-sky-500 to-sky-600 p-12 overflow-hidden">
-                                            <div className="relative z-10 flex justify-between items-start">
-                                                <div>
-                                                    <h1 className="text-5xl font-black text-white italic tracking-tighter">Planifica</h1>
-                                                    <p className="text-sky-100 text-xs font-black uppercase tracking-[0.3em] mt-2">Reporte Individual de Progreso</p>
-                                                </div>
-                                                <div className="bg-white/20 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/30 text-right">
-                                                    <p className="text-[10px] font-black text-sky-50 uppercase tracking-widest mb-1">FECHA DE SESIÓN</p>
-                                                    <p className="text-white font-bold text-lg">{new Date(ev.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                                                </div>
-                                            </div>
-                                            <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-                                        </div>
-
-                                        <div className="p-12 -mt-12 relative z-10">
-                                            {/* Child Info Card */}
-                                            <div className="bg-white rounded-[3rem] shadow-2xl p-10 border-4 border-slate-50 flex gap-10 mb-12">
-                                                <div className="w-24 h-24 bg-sky-50 rounded-[2rem] flex items-center justify-center border-2 border-sky-100 shrink-0">
-                                                    <User className="w-12 h-12 text-sky-500" />
-                                                </div>
-                                                <div className="flex-1 grid grid-cols-2 gap-8">
-                                                    <div>
-                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">ALUMNO/A</p>
-                                                        <p className="text-2xl font-black text-slate-800 uppercase tracking-tighter">{child.firstName} {child.lastName}</p>
+                                    <div id={`pdf-eval-${ev.id}`} className="bg-white text-slate-800 font-sans p-16">
+                                        <div className="min-w-[700px]">
+                                            {/* Header Unificado Estilo Planificación */}
+                                            <div className="flex items-center justify-between w-full border-b-8 border-sky-400 pb-12 mb-12">
+                                                <div className="flex items-center gap-8">
+                                                    <div className="p-6 bg-sky-500 rounded-[2rem]">
+                                                        <Star className="text-white w-12 h-12 fill-white" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">NIVEL EDUCATIVO</p>
-                                                        <p className="text-xl font-bold text-slate-700">{ev.level}</p>
+                                                        <h1 className="text-6xl font-black text-slate-900 italic">Planifica</h1>
+                                                        <p className="text-[14px] font-bold text-sky-400 uppercase tracking-[0.5em] mt-3">Reporte Individual</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[12px] font-black text-slate-300 uppercase mb-2 tracking-widest">Emitido el</p>
+                                                    <p className="text-lg font-black text-slate-800 bg-slate-50 px-8 py-3 rounded-2xl border border-slate-100 italic">
+                                                        {new Date(ev.created_at).toLocaleDateString('es-CL')}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Grid de Información (Planning Style) */}
+                                            <div className="grid grid-cols-3 gap-6 mb-16">
+                                                <div className="bg-sky-50/50 p-8 rounded-[2.5rem] border-2 border-sky-100 flex items-center gap-6">
+                                                    <div className="p-4 bg-white rounded-2xl text-sky-500 shadow-sm"><User className="w-8 h-8" /></div>
+                                                    <div>
+                                                        <div className="text-[11px] font-black text-sky-500 uppercase mb-1 tracking-widest">Alumno/a</div>
+                                                        <div className="text-xl font-black text-slate-900 leading-tight">{child.firstName} {child.lastName[0]}.</div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-amber-50/50 p-8 rounded-[2.5rem] border-2 border-amber-100 flex items-center gap-6">
+                                                    <div className="p-4 bg-white rounded-2xl text-amber-500 shadow-sm"><Building2 className="w-8 h-8" /></div>
+                                                    <div className="overflow-hidden">
+                                                        <div className="text-[11px] font-black text-amber-500 uppercase mb-1 tracking-widest">Establecimiento</div>
+                                                        <div className="text-xl font-black text-slate-900 truncate">{ev.establishment || 'Educacional'}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-emerald-50/50 p-8 rounded-[2.5rem] border-2 border-emerald-100 flex items-center gap-6">
+                                                    <div className="p-4 bg-white rounded-2xl text-emerald-500 shadow-sm"><Target className="w-8 h-8" /></div>
+                                                    <div>
+                                                        <div className="text-[11px] font-black text-emerald-500 uppercase mb-1 tracking-widest">Nivel</div>
+                                                        <div className="text-xl font-black text-slate-900">{ev.level}</div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* Institution Header */}
-                                            <div className="flex items-center gap-4 mb-8 pl-4">
-                                                <div className="w-1.5 h-8 bg-sky-500 rounded-full"></div>
-                                                <div>
-                                                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">{ev.establishment || "Sin Establecimiento"}</h3>
-                                                    <p className="text-sm font-bold text-slate-400">RBD: {ev.rbd || "---"} | Período: {ev.year || "2026"}</p>
-                                                </div>
+                                            {/* Indicators Section (Planning Style) */}
+                                            <div className="space-y-8">
+                                                {(ev.indicators || []).map((ind: any, i: number) => {
+                                                    const result = isNewFormat ? ind.evaluationsByChild?.[child.id] : ind.finalAchievement;
+                                                    const colorClass = result === 'L' ? 'bg-emerald-500' : result === 'ML' ? 'bg-amber-500' : result === 'N/O' ? 'bg-rose-500' : 'bg-slate-400';
+                                                    const bgClass = result === 'L' ? 'bg-emerald-50/20' : result === 'ML' ? 'bg-amber-50/20' : result === 'N/O' ? 'bg-rose-50/20' : 'bg-slate-50/20';
+                                                    const textClass = result === 'L' ? 'text-emerald-700' : result === 'ML' ? 'text-amber-700' : result === 'N/O' ? 'text-rose-700' : 'text-slate-500';
+
+                                                    return (
+                                                        <div key={i} className="p-10 bg-white border-2 border-slate-100 rounded-[3.5rem] shadow-sm flex gap-8 pdf-block">
+                                                            <div className={`${colorClass} w-3 rounded-full shrink-0`}></div>
+                                                            <div className="flex-1 space-y-6">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className={`flex items-center gap-3 font-black text-[11px] uppercase tracking-[0.3em] ${textClass}`}>
+                                                                        Indicador {i + 1}
+                                                                    </div>
+                                                                    <div className={`px-6 py-2 rounded-2xl text-[10px] font-black tracking-widest ${colorClass} text-white`}>
+                                                                        {(!result || result === 'None') ? 'PENDIENTE' : (EVAL_MODES.find(m => m.id === result)?.full || result).toUpperCase()}
+                                                                    </div>
+                                                                </div>
+                                                                <div className={`text-lg text-slate-900 ${bgClass} p-8 rounded-[2.5rem] leading-relaxed font-bold`}>
+                                                                    {ind.text}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
 
-                                            {/* Indicators Table */}
-                                            <div className="bg-slate-50/50 rounded-[2.5rem] p-4 border border-slate-100">
-                                                <table className="w-full border-separate border-spacing-y-3">
-                                                    <thead>
-                                                        <tr>
-                                                            <th className="text-left py-4 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Objetivo de Aprendizaje / Indicador</th>
-                                                            <th className="text-center py-4 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] w-48">Logro</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {(ev.indicators || []).map((ind: any, i: number) => {
-                                                            const result = isNewFormat ? ind.evaluationsByChild?.[child.id] : ind.finalAchievement;
-                                                            return (
-                                                                <tr key={i} className="pdf-block">
-                                                                    <td className="py-6 px-10 bg-white rounded-l-[2rem] border-y border-l border-slate-100 text-sm font-bold text-slate-700 leading-relaxed shadow-sm">
-                                                                        <div className="flex items-start gap-4">
-                                                                            <span className="shrink-0 w-6 h-6 bg-slate-800 text-white rounded-lg flex items-center justify-center text-[10px] font-black mt-1">{i + 1}</span>
-                                                                            {ind.text}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="py-6 px-10 bg-white rounded-r-[2rem] border-y border-r border-slate-100 shadow-sm text-center">
-                                                                        <div className={`inline-block px-6 py-2.5 rounded-2xl text-[10px] font-black tracking-widest ${
-                                                                            result === 'L' ? 'bg-emerald-500 text-white' :
-                                                                            result === 'ML' ? 'bg-amber-500 text-white' :
-                                                                            result === 'N/O' ? 'bg-slate-500 text-white' :
-                                                                            'bg-slate-100 text-slate-300'
-                                                                        }`}>
-                                                                            {(!result || result === 'None') ? 'PENDIENTE' : (EVAL_MODES.find(m => m.id === result)?.full || result).toUpperCase()}
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            );
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-
-                                            {/* Footer Signature Section */}
-                                            <div className="mt-24 pt-12 border-t border-slate-100 flex justify-between items-end px-4">
+                                            {/* Footer Unificado */}
+                                            <div className="mt-24 pt-12 border-t border-slate-100 flex justify-between items-end">
                                                 <div className="space-y-4">
                                                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Simbología</p>
                                                     <div className="flex gap-6">
                                                         {EVAL_MODES.map(mode => (
                                                             <div key={mode.id} className="flex items-center gap-2">
-                                                                <span className={`w-3 h-3 rounded-full ${mode.id === 'L' ? 'bg-emerald-500' : mode.id === 'ML' ? 'bg-amber-500' : 'bg-slate-500'}`}></span>
+                                                                <span className={`w-3 h-3 rounded-full ${mode.id === 'L' ? 'bg-emerald-500' : mode.id === 'ML' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
                                                                 <span className="text-[10px] font-bold text-slate-500">{mode.id}: {mode.full}</span>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className="text-center w-64 pb-2">
-                                                    <div className="border-b-2 border-slate-200 mb-4 h-12 w-full"></div>
-                                                    <p className="text-xs font-black uppercase text-slate-500 tracking-tighter">Firma Educadora Responsable</p>
+                                                <div className="text-center w-72">
+                                                    <div className="border-b-2 border-slate-200 mb-4 h-16 w-full"></div>
+                                                    <p className="text-xs font-black uppercase text-slate-500 tracking-widest">Firma Educadora Responsable</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -364,26 +359,54 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                 </div>
 
                                 <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '297mm', pointerEvents: 'none' }} aria-hidden="true">
-                                    <div id={`pdf-matrix-${ev.id}`} className="bg-[#fff1f2] p-12 min-h-[210mm]">
-                                        <div className="bg-white rounded-[4rem] shadow-2xl p-12 border-4 border-rose-100/50">
-                                            {/* Header Matriz Premium V2 (Exact Match) */}
-                                            <div className="mb-12">
-                                                <h1 className="text-xl font-black text-rose-500 uppercase tracking-[0.3em] mb-8">Matriz General de la Sesión</h1>
-                                                
-                                                <div className="flex items-center justify-between mb-4 border-b border-rose-100 pb-4">
-                                                    <div className="space-y-1">
-                                                        <p className="text-2xl font-black text-slate-800 tracking-tighter">{ev.establishment || "Institución Educacional"}</p>
-                                                        <p className="text-sm font-bold text-slate-400">RBD: {ev.rbd || "---"} | {ev.level} | {ev.year}</p>
+                                    <div id={`pdf-matrix-${ev.id}`} className="bg-white p-16">
+                                        <div className="min-w-[900px]">
+                                            {/* Header Unificado Estilo Planificación (Landscape) */}
+                                            <div className="flex items-center justify-between w-full border-b-8 border-sky-400 pb-12 mb-12">
+                                                <div className="flex items-center gap-8">
+                                                    <div className="p-6 bg-sky-500 rounded-[2rem]">
+                                                        <Star className="text-white w-12 h-12 fill-white" />
                                                     </div>
-                                                    <div className="text-right">
-                                                        <p className="text-rose-500 font-black text-xl">{new Date(ev.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1">Fecha de Emisión</p>
+                                                    <div>
+                                                        <h1 className="text-6xl font-black text-slate-900 italic">Planifica</h1>
+                                                        <p className="text-[14px] font-bold text-sky-400 uppercase tracking-[0.5em] mt-3">Matriz General de Sesión</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[12px] font-black text-slate-300 uppercase mb-2 tracking-widest">Emitido el</p>
+                                                    <p className="text-lg font-black text-slate-800 bg-slate-50 px-8 py-3 rounded-2xl border border-slate-100 italic">
+                                                        {new Date(ev.created_at).toLocaleDateString('es-CL')}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Grid de Información Contextual */}
+                                            <div className="grid grid-cols-3 gap-6 mb-16 px-4">
+                                                <div className="bg-sky-50/50 p-8 rounded-[2.5rem] border-2 border-sky-100 flex items-center gap-6">
+                                                    <div className="p-4 bg-white rounded-2xl text-sky-500 shadow-sm"><Target className="w-8 h-8" /></div>
+                                                    <div>
+                                                        <div className="text-[11px] font-black text-sky-500 uppercase mb-1 tracking-widest">Nivel</div>
+                                                        <div className="text-xl font-black text-slate-900">{ev.level}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-amber-50/50 p-8 rounded-[2.5rem] border-2 border-amber-100 flex items-center gap-6">
+                                                    <div className="p-4 bg-white rounded-2xl text-amber-500 shadow-sm"><Building2 className="w-8 h-8" /></div>
+                                                    <div className="overflow-hidden">
+                                                        <div className="text-[11px] font-black text-amber-500 uppercase mb-1 tracking-widest">Establecimiento</div>
+                                                        <div className="text-xl font-black text-slate-900 truncate">{ev.establishment || 'Educacional'}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-emerald-50/50 p-8 rounded-[2.5rem] border-2 border-emerald-100 flex items-center gap-6">
+                                                    <div className="p-4 bg-white rounded-2xl text-emerald-500 shadow-sm"><Star className="w-8 h-8" /></div>
+                                                    <div>
+                                                        <div className="text-[11px] font-black text-emerald-500 uppercase mb-1 tracking-widest">Año/Período</div>
+                                                        <div className="text-xl font-black text-slate-900">{ev.year || '2026'}</div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* Matrix Table with Diagonal and Vertical Names - Fixed Alignment Version */}
-                                            <div className="overflow-hidden rounded-[1.5rem] border border-rose-100 bg-white">
+                                            {/* Matrix Table with Fixed Alignment */}
+                                            <div className="overflow-hidden rounded-[3rem] border-2 border-slate-100 bg-white mb-16 shadow-sm">
                                                 <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
                                                     <colgroup>
                                                         <col style={{ width: '35%' }} />
@@ -392,24 +415,23 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                         ))}
                                                     </colgroup>
                                                     <thead>
-                                                        <tr className="bg-white">
-                                                            <th className="p-0 border border-rose-100 relative h-32">
-                                                                {/* Diagonal Line Cell */}
+                                                        <tr className="bg-slate-50/30">
+                                                            <th className="p-0 border border-slate-100 relative h-32">
                                                                 <div className="absolute inset-0 overflow-hidden">
                                                                     <svg className="w-full h-full" preserveAspectRatio="none">
-                                                                        <line x1="0" y1="0" x2="100%" y2="100%" stroke="#ffe4e6" strokeWidth="1" />
+                                                                        <line x1="0" y1="0" x2="100%" y2="100%" stroke="#e2e8f0" strokeWidth="1" />
                                                                     </svg>
                                                                 </div>
-                                                                <div className="absolute top-2 right-4 text-[9px] font-black text-rose-300 uppercase tracking-widest">Indicadores</div>
-                                                                <div className="absolute bottom-2 left-4 text-[9px] font-black text-rose-300 uppercase tracking-widest">Nombres</div>
+                                                                <div className="absolute top-3 right-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Indicadores</div>
+                                                                <div className="absolute bottom-3 left-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombres</div>
                                                             </th>
                                                             {(ev.child_ids || []).map((cid: string, idx: number) => {
                                                                 const childData = (children || []).find(c => c.id === cid);
                                                                 return (
-                                                                    <th key={cid} className="p-0 border border-rose-100 bg-white min-w-[40px] align-bottom relative h-32">
-                                                                        <div className="absolute top-0 inset-x-0 py-1 bg-rose-50/30 border-b border-rose-100 text-[9px] font-black text-rose-400 text-center">{idx + 1}</div>
+                                                                    <th key={cid} className="p-0 border border-slate-100 bg-white min-w-[40px] align-bottom relative h-32">
+                                                                        <div className="absolute top-0 inset-x-0 py-1.5 bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 text-center">{idx + 1}</div>
                                                                         <div className="h-24 w-full flex items-center justify-center overflow-hidden">
-                                                                            <span className="text-[11px] font-black text-slate-600 uppercase tracking-tight whitespace-nowrap inline-block" 
+                                                                            <span className="text-[12px] font-black text-slate-700 uppercase tracking-tight whitespace-nowrap inline-block" 
                                                                                   style={{ 
                                                                                       transform: 'rotate(-90deg)',
                                                                                       width: '100px',
@@ -426,22 +448,21 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                     <tbody>
                                                         {(ev.indicators || []).map((ind: any, objIdx: number) => (
                                                             <tr key={objIdx} className="pdf-block">
-                                                                <td className="p-4 border border-rose-100 bg-white">
-                                                                    <div className="flex gap-3 items-center">
-                                                                        <span className="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">{objIdx + 1}</span>
-                                                                        <span className="text-[12px] font-bold text-slate-700 leading-tight tracking-tight">{ind.text}</span>
+                                                                <td className="p-6 border border-slate-100 bg-white">
+                                                                    <div className="flex gap-4 items-center">
+                                                                        <span className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-black shrink-0">{objIdx + 1}</span>
+                                                                        <span className="text-[13px] font-bold text-slate-800 leading-tight">{ind.text}</span>
                                                                     </div>
                                                                 </td>
                                                                 {(ev.child_ids || []).map((cid: string) => {
-                                                                    const isNewFormat = ind.evaluationsByChild !== undefined;
                                                                     const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
                                                                     return (
-                                                                        <td key={cid} className="p-1 border border-rose-100 text-center bg-white h-12">
+                                                                        <td key={cid} className="p-1 border border-slate-100 text-center bg-white h-16">
                                                                             <div className="flex items-center justify-center h-full">
-                                                                                <span className={`w-7 h-7 leading-[28px] rounded-lg text-[9px] font-black shadow-sm ${
+                                                                                <span className={`w-8 h-8 leading-[32px] rounded-xl text-[10px] font-black shadow-sm ${
                                                                                     val === 'L' ? 'bg-[#f0fdf4] text-[#166534] border border-[#bcf0da]' :
                                                                                     val === 'ML' ? 'bg-[#fffbeb] text-[#92400e] border border-[#fef3c7]' :
-                                                                                    val === 'N/O' ? 'bg-[#f8fafb] text-[#475569] border border-[#e2e8f0]' :
+                                                                                    val === 'N/O' ? 'bg-[#fef2f2] text-[#991b1b] border border-[#fee2e2]' :
                                                                                     'bg-slate-50 text-slate-200'
                                                                                 }`}>
                                                                                     {val || '-'}
@@ -456,37 +477,30 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 </table>
                                             </div>
 
-                                            {/* Footer with Signatures and Legend */}
-                                            <div className="mt-16 flex justify-between items-start px-4">
+                                            {/* Footer Matriz Unificado */}
+                                            <div className="mt-8 flex justify-between items-start px-8">
                                                 <div className="space-y-6">
-                                                    <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Simbología de Evaluación</p>
-                                                        <div className="flex gap-10">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="w-5 h-5 rounded-lg bg-[#f0fdf4] border border-[#bcf0da] flex items-center justify-center text-[9px] font-black text-[#166534]">L</span>
-                                                                <span className="text-xs font-bold text-slate-600">Logrado</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="w-5 h-5 rounded-lg bg-[#fffbeb] border border-[#fef3c7] flex items-center justify-center text-[9px] font-black text-[#92400e]">ML</span>
-                                                                <span className="text-xs font-bold text-slate-600">Mediante Logrado</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="w-5 h-5 rounded-lg bg-[#f8fafb] border border-[#e2e8f0] flex items-center justify-center text-[9px] font-black text-[#475569]">N/O</span>
-                                                                <span className="text-xs font-bold text-slate-600">No Observado</span>
-                                                            </div>
+                                                    <div className="bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
+                                                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Simbología</p>
+                                                        <div className="flex gap-12">
+                                                            {EVAL_MODES.map(mode => (
+                                                                <div key={mode.id} className="flex items-center gap-3">
+                                                                    <span className={`w-4 h-4 rounded-full ${mode.id === 'L' ? 'bg-emerald-500' : mode.id === 'ML' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
+                                                                    <span className="text-[11px] font-bold text-slate-600">{mode.id}: {mode.full}</span>
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     </div>
-                                                    <p className="text-[10px] text-slate-300 font-bold uppercase tracking-tighter italic">Planifica AI - Reporte Oficial de Seguimiento Curricular</p>
                                                 </div>
                                                 
                                                 <div className="flex gap-20 pt-10">
                                                     <div className="text-center w-64">
-                                                        <div className="border-b-[3px] border-slate-100 mb-4 h-20 w-full"></div>
-                                                        <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Firma Educadora</p>
+                                                        <div className="border-b-2 border-slate-200 mb-4 h-16 w-full"></div>
+                                                        <p className="text-[11px] font-black uppercase text-slate-500 tracking-widest">Firma Educadora</p>
                                                     </div>
                                                     <div className="text-center w-64">
-                                                        <div className="border-b-[3px] border-slate-100 mb-4 h-20 w-full"></div>
-                                                        <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Timbre Institución</p>
+                                                        <div className="border-b-2 border-slate-200 mb-4 h-16 w-full"></div>
+                                                        <p className="text-[11px] font-black uppercase text-slate-500 tracking-widest">Timbre Institución</p>
                                                     </div>
                                                 </div>
                                             </div>
