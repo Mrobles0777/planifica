@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Plus, Baby, Calendar, GraduationCap, Info, Syringe, AlertCircle, Trash2, UserPlus } from 'lucide-react';
+import { ArrowLeft, Plus, Baby, Calendar, GraduationCap, Info, Syringe, AlertCircle, Trash2, UserPlus, CheckCircle2, Loader2 } from 'lucide-react';
 import { Child, Level } from '../types';
 import { supabase } from '../supabaseClient';
 function formatDateForSupabase(dateStr: string) {
@@ -89,7 +89,11 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                     otherInfo: ''
                 });
                 setSaveSuccess(true);
-                setTimeout(() => setSaveSuccess(false), 3000);
+                // Cerrar el formulario y volver al listado tras 2 segundos
+                setTimeout(() => {
+                    setSaveSuccess(false);
+                    setShowForm(false);
+                }, 2000);
             }
         } catch (err: any) {
             console.error("Error adding child:", err);
@@ -266,7 +270,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                         {saveSuccess && (
                             <div className="flex items-center gap-2 text-emerald-600 font-black text-sm animate-in fade-in slide-in-from-right-4">
                                 <CheckCircle2 className="w-5 h-5" />
-                                Registrado con éxito
+                                ¡Niño/a guardado exitosamente!
                             </div>
                         )}
                         <button
@@ -282,7 +286,7 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                             ) : (
                                 <>
                                     <UserPlus className="w-6 h-6" />
-                                    Guardar y Agregar Otro
+                                    Guardar Registro
                                 </>
                             )}
                         </button>
