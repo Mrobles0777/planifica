@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import { Target, ArrowLeft, Save, UserPlus, Baby, GraduationCap, Calendar, Building2, Hash, Sparkles, User } from 'lucide-react';
-import { Child, EvaluationSession, EvaluationIndicator, AchievementLevel } from '../types';
+import { Level, Child, EvaluationSession, EvaluationIndicator, AchievementLevel, Nucleo, Objective } from '../types';
 import { supabase } from '../supabaseClient';
 import EvaluationTrackingView from './EvaluationTrackingView';
 
@@ -10,19 +8,32 @@ interface EvaluationsViewProps {
     session: any;
     evaluations: any[];
     onFetchEvaluations: () => void;
+    groupedData: Record<string, Nucleo[]>;
+    expandedAmbito: string | null;
+    toggleAmbito: (ambito: string) => void;
 }
 
-const DEFAULT_INDICATORS: string[] = [
-    "Corre alternando velocidades. Ej: rápido y lento.",
-    "Salta en un pie manteniendo el equilibrio.",
-    "Manipula objetos pequeños con precisión (pinza).",
-    "Sigue instrucciones simples de autocuidado.",
-    "Expresa sus necesidades y emociones de forma clara."
-];
+import { ChevronRight, ChevronDown, CheckCircle2, ListChecks } from 'lucide-react';
 
-const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, session, evaluations, onFetchEvaluations }) => {
+const EvaluationsView: React.FC<EvaluationsViewProps> = ({ 
+    setView, 
+    children, 
+    session, 
+    evaluations, 
+    onFetchEvaluations,
+    groupedData,
+    expandedAmbito,
+    toggleAmbito
+}) => {
     const [isSaving, setIsSaving] = useState(false);
     const [viewMode, setViewMode] = useState<'new' | 'tracking'>('new');
+    const [isConfiguring, setIsConfiguring] = useState(true);
+    
+    // Estados de Selección Curricular
+    const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
+    const [selectedNucleo, setSelectedNucleo] = useState<Nucleo | null>(null);
+    const [selectedObjectives, setSelectedObjectives] = useState<Objective[]>([]);
+
     const [trackingChild, setTrackingChild] = useState<Child | null>(null);
     const [sessionData, setSessionData] = useState<Partial<EvaluationSession>>({
         establishment: '',
@@ -30,12 +41,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
         level: '1° Transición',
         year: '2026',
         childIds: [],
-        indicators: DEFAULT_INDICATORS.map((text, idx) => ({
-            id: `ind-${idx}`,
-            text,
-            evaluations: [null, null, null],
-            finalAchievement: 'None'
-        }))
+        indicators: []
     });
 
     const [selectedChildId, setSelectedChildId] = useState<string>("");
@@ -69,16 +75,39 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
         }));
     };
 
-    const updateFinalAchievement = (indicatorId: string, level: AchievementLevel) => {
+    const toggleObjective = (obj: Objective) => {
+        setSelectedObjectives(prev => {
+            if (prev.find(o => o.id === obj.id)) {
+                return prev.filter(o => o.id !== obj.id);
+            }
+            return [...prev, obj];
+        });
+    };
+
+    const selectAllObjectives = () => {
+        if (!selectedNucleo || !selectedLevel) return;
+        setSelectedObjectives(selectedNucleo.objectives[selectedLevel]);
+    };
+
+    const deselectAllObjectives = () => {
+        setSelectedObjectives([]);
+    };
+
+    const startEvaluation = () => {
+        if (selectedObjectives.length === 0) {
+            alert("Selecciona al menos un objetivo de aprendizaje.");
+            return;
+        }
         setSessionData(prev => ({
             ...prev,
-            indicators: prev.indicators?.map(ind => {
-                if (ind.id === indicatorId) {
-                    return { ...ind, finalAchievement: level };
-                }
-                return ind;
-            })
+            indicators: selectedObjectives.map((obj, idx) => ({
+                id: `ind-${obj.id}-${idx}`,
+                text: obj.text,
+                evaluations: [null, null, null],
+                finalAchievement: 'None'
+            }))
         }));
+        setIsConfiguring(false);
     };
 
     const handleSave = async () => {
@@ -246,14 +275,129 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
                     onBack={() => setTrackingChild(null)} 
                     onFetchEvaluations={onFetchEvaluations}
                 />
+            ) : viewMode === 'new' && isConfiguring ? (
+                /* Interfaz de Selección Curricular */
+                <div className="space-y-10 animate-in slide-in-from-bottom-4">
+                    {/* Paso 1: Nivel */}
+                    <div className="space-y-4">
+                        <label className="text-[11px] font-black text-sky-500 uppercase block ml-4 tracking-widest">1. Seleccionar Nivel</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {Object.values(Level).map((lvl) => (
+                                <button
+                                    key={lvl}
+                                    onClick={() => { setSelectedLevel(lvl); setSelectedNucleo(null); setSelectedObjectives([]); }}
+                                    className={`text-left p-6 rounded-[2rem] border-2 transition-all ${selectedLevel === lvl ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-lg' : 'border-slate-100 bg-white hover:border-sky-100'}`}
+                                >
+                                    <span className="text-base font-black">{lvl}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Paso 2: Ámbito y Núcleo */}
+                    {selectedLevel && (
+                        <div className="space-y-4 animate-in fade-in">
+                            <label className="text-[11px] font-black text-rose-500 uppercase block ml-4 tracking-widest">2. Ámbito y Núcleo</label>
+                            <div className="space-y-3">
+                                {Object.keys(groupedData).map((ambito) => (
+                                    <div key={ambito} className="bg-white rounded-[2rem] border-2 border-slate-100 overflow-hidden shadow-sm">
+                                        <button
+                                            onClick={() => toggleAmbito(ambito)}
+                                            className="w-full flex items-center justify-between p-6 bg-slate-50/50 hover:bg-slate-100 transition-colors"
+                                        >
+                                            <span className="text-xs font-black text-slate-700 uppercase tracking-wider text-left">{ambito}</span>
+                                            {expandedAmbito === ambito ? <ChevronDown className="w-5 h-5 text-rose-500" /> : <ChevronRight className="w-5 h-5 text-slate-300" />}
+                                        </button>
+                                        {expandedAmbito === ambito && (
+                                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3 bg-white animate-in slide-in-from-top-2">
+                                                {groupedData[ambito].map(nuc => (
+                                                    <button
+                                                        key={nuc.name}
+                                                        onClick={() => { setSelectedNucleo(nuc); setSelectedObjectives([]); }}
+                                                        className={`w-full text-left p-5 rounded-2xl border-2 transition-all ${selectedNucleo?.name === nuc.name ? 'bg-rose-500 text-white border-rose-500 shadow-md' : 'bg-white text-slate-600 border-slate-50 hover:border-rose-100'}`}
+                                                    >
+                                                        <span className="text-xs font-bold leading-tight">{nuc.name}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Paso 3: Objetivos (Selección Múltiple) */}
+                    {selectedNucleo && selectedLevel && (
+                        <div className="space-y-4 animate-in fade-in">
+                            <div className="flex items-center justify-between ml-4">
+                                <label className="text-[11px] font-black text-emerald-500 uppercase tracking-widest">3. Objetivos de Aprendizaje</label>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={selectAllObjectives}
+                                        className="text-[10px] font-black text-emerald-600 hover:underline uppercase tracking-tighter"
+                                    >
+                                        Seleccionar Todos
+                                    </button>
+                                    <span className="text-slate-300">|</span>
+                                    <button 
+                                        onClick={deselectAllObjectives}
+                                        className="text-[10px] font-black text-slate-400 hover:underline uppercase tracking-tighter"
+                                    >
+                                        Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="grid gap-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                                {selectedNucleo.objectives[selectedLevel].map((obj) => {
+                                    const isSelected = !!selectedObjectives.find(o => o.id === obj.id);
+                                    return (
+                                        <button
+                                            key={obj.id}
+                                            onClick={() => toggleObjective(obj)}
+                                            className={`text-left p-6 rounded-[2.5rem] border-2 transition-all ${isSelected ? 'border-emerald-500 bg-emerald-50 shadow-md scale-[1.01]' : 'border-slate-100 bg-white hover:border-emerald-50'}`}
+                                        >
+                                            <div className="flex gap-4">
+                                                <div className={`p-1.5 rounded-full shrink-0 transition-colors ${isSelected ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-300'}`}>
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600">OA {obj.id}</span>
+                                                    <span className="text-sm font-bold text-slate-700 leading-relaxed">{obj.text}</span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <button
+                                onClick={startEvaluation}
+                                disabled={selectedObjectives.length === 0}
+                                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-6 rounded-[2.5rem] shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50 mt-6"
+                            >
+                                <ListChecks className="w-6 h-6" />
+                                Iniciar Evaluación ({selectedObjectives.length})
+                            </button>
+                        </div>
+                    )}
+                </div>
             ) : viewMode === 'new' ? (
                 /* Matriz de Evaluación */
                 <div className="bg-white p-8 md:p-10 rounded-[4rem] shadow-2xl border-4 border-rose-50 space-y-8 overflow-hidden">
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-rose-100 rounded-2xl">
+                    <div className="p-3 bg-rose-100 rounded-2xl flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-rose-600" />
+                        <button 
+                            onClick={() => setIsConfiguring(true)}
+                            className="text-[10px] font-black uppercase text-rose-500 hover:underline"
+                        >
+                            Cambiar Objetivos
+                        </button>
                     </div>
-                    <h3 className="text-xl font-black text-slate-800 tracking-tight">Eje Motricidad y Autonomía</h3>
+                    <h3 className="text-xl font-black text-slate-800 tracking-tight">
+                        {selectedNucleo?.name || 'Eje Evaluación'}
+                    </h3>
                 </div>
 
                 <div className="overflow-x-auto -mx-8 md:-mx-10 px-8 md:px-10">

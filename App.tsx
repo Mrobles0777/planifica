@@ -709,6 +709,9 @@ const App: React.FC = () => {
             session={session} 
             evaluations={evaluations}
             onFetchEvaluations={fetchEvaluations}
+            groupedData={groupedData}
+            expandedAmbito={expandedAmbito}
+            toggleAmbito={toggleAmbito}
           />
         )}
 
