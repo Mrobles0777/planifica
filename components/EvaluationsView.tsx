@@ -1,3 +1,5 @@
+import React, { useState } from 'react';
+import { Target, ArrowLeft, Save, UserPlus, Baby, GraduationCap, Calendar, Building2, Hash, Sparkles, User, ChevronRight, ChevronDown, CheckCircle2, ListChecks, Loader2 } from 'lucide-react';
 import { Level, Child, EvaluationSession, EvaluationIndicator, AchievementLevel, Nucleo, Objective } from '../types';
 import { supabase } from '../supabaseClient';
 import EvaluationTrackingView from './EvaluationTrackingView';
@@ -12,8 +14,6 @@ interface EvaluationsViewProps {
     expandedAmbito: string | null;
     toggleAmbito: (ambito: string) => void;
 }
-
-import { ChevronRight, ChevronDown, CheckCircle2, ListChecks } from 'lucide-react';
 
 const EvaluationsView: React.FC<EvaluationsViewProps> = ({ 
     setView, 
