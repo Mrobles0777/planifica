@@ -23,7 +23,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
     const [viewMode, setViewMode] = useState<Record<string, 'individual' | 'general'>>({});
     const [selectedDashboardAmbito, setSelectedDashboardAmbito] = useState<string>('Desarrollo Personal y Social');
 
-    const childEvaluations = child?.id 
+    const childEvaluations = child?.id
         ? (evaluations || []).filter(ev => ev.child_ids?.includes(child.id))
         : (evaluations || []);
     const ambitos = Array.from(new Set(CURRICULUM_DATA.map(n => n.ambito)));
@@ -41,7 +41,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
 
                 // Fallback para registros antiguos (búsqueda por ID)
                 if (!ambito || !nucleoName) {
-                    const nucleoData = CURRICULUM_DATA.find(n => 
+                    const nucleoData = CURRICULUM_DATA.find(n =>
                         Object.values(n.objectives).some(objs => objs.some(o => o.id === ind.id))
                     );
                     if (nucleoData) {
@@ -84,18 +84,18 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
 
             const isLandscape = type !== 'individual';
             const dateStr = new Date().toLocaleDateString('es-CL').replace(/\//g, '-');
-            const sanitizedName = child 
+            const sanitizedName = child
                 ? child.firstName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/gi, '_')
                 : 'General_Clase';
             const fileName = `Planifica_${type === 'full' ? 'Historial_Completo' : (type === 'individual' ? 'Reporte' : 'Matriz')}_${sanitizedName}.pdf`;
 
             const opt = {
-                margin: isLandscape ? 5 : 0,
+                margin: [10, 8, 10, 8],
                 filename: fileName,
-                image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: { scale: 3, useCORS: true, logging: false, backgroundColor: '#ffffff', letterRendering: true },
+                image: { type: 'jpeg', quality: 0.97 },
+                html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', letterRendering: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: isLandscape ? 'landscape' : 'portrait', compress: true },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                pagebreak: { mode: ['css', 'legacy'], avoid: '.pdf-block, .pdf-no-break' }
             };
 
             // @ts-ignore
@@ -175,16 +175,16 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                 <h4 className="text-lg font-black text-slate-700 italic">{ev.establishment || "Institución"}</h4>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="flex flex-wrap gap-3">
                                             <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50 shadow-inner">
-                                                <button 
+                                                <button
                                                     onClick={() => setViewMode(prev => ({ ...prev, [ev.id]: 'individual' }))}
                                                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${currentMode === 'individual' ? 'bg-white text-sky-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
                                                 >
                                                     Individual
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => setViewMode(prev => ({ ...prev, [ev.id]: 'general' }))}
                                                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${currentMode === 'general' ? 'bg-white text-rose-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
                                                 >
@@ -231,13 +231,12 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                             return (
                                                                 <div key={i} className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                                                     <span className="text-xs font-bold text-slate-700 leading-tight pr-4">{ind.text}</span>
-                                                                    <span className={`px-4 py-2 rounded-xl text-[10px] font-black shadow-sm shrink-0 border ${
-                                                                        child && result === 'L' ? 'bg-emerald-500 text-white border-emerald-400' :
-                                                                        child && result === 'ML' ? 'bg-amber-500 text-white border-amber-400' :
-                                                                        child && result === 'N/O' ? 'bg-slate-500 text-white border-slate-400' :
-                                                                        !child ? 'bg-sky-50 text-sky-600 border-sky-100' :
-                                                                        'bg-slate-50 text-slate-300 border-slate-100'
-                                                                    }`}>
+                                                                    <span className={`px-4 py-2 rounded-xl text-[10px] font-black shadow-sm shrink-0 border ${child && result === 'L' ? 'bg-emerald-500 text-white border-emerald-400' :
+                                                                            child && result === 'ML' ? 'bg-amber-500 text-white border-amber-400' :
+                                                                                child && result === 'N/O' ? 'bg-slate-500 text-white border-slate-400' :
+                                                                                    !child ? 'bg-sky-50 text-sky-600 border-sky-100' :
+                                                                                        'bg-slate-50 text-slate-300 border-slate-100'
+                                                                        }`}>
                                                                         {result}
                                                                     </span>
                                                                 </div>
@@ -287,12 +286,11 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                             const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
                                                                             return (
                                                                                 <td key={cid} className="p-2 border-b border-r border-rose-50 text-center bg-white">
-                                                                                    <span className={`inline-block w-9 h-9 border-2 leading-8 rounded-xl text-[10px] font-black transition-all ${
-                                                                                        val === 'L' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm' :
-                                                                                        val === 'ML' ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm' :
-                                                                                        val === 'N/O' ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-sm' :
-                                                                                        'text-slate-100 border-transparent bg-transparent'
-                                                                                    }`}>
+                                                                                    <span className={`inline-block w-9 h-9 border-2 leading-8 rounded-xl text-[10px] font-black transition-all ${val === 'L' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm' :
+                                                                                            val === 'ML' ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm' :
+                                                                                                val === 'N/O' ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-sm' :
+                                                                                                    'text-slate-100 border-transparent bg-transparent'
+                                                                                        }`}>
                                                                                         {val || '-'}
                                                                                     </span>
                                                                                 </td>
@@ -417,11 +415,10 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                     const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
                                                                     return (
                                                                         <td key={cid} className="p-1 border border-slate-100 text-center bg-white h-16">
-                                                                            <span className={`inline-block w-8 h-8 leading-[32px] rounded-xl text-[10px] font-black ${
-                                                                                val === 'L' ? 'bg-[#f0fdf4] text-[#166534]' :
-                                                                                val === 'ML' ? 'bg-[#fffbeb] text-[#92400e]' :
-                                                                                val === 'N/O' ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-slate-50 text-slate-200'
-                                                                            }`}>{val || '-'}</span>
+                                                                            <span className={`inline-block w-8 h-8 leading-[32px] rounded-xl text-[10px] font-black ${val === 'L' ? 'bg-[#f0fdf4] text-[#166534]' :
+                                                                                    val === 'ML' ? 'bg-[#fffbeb] text-[#92400e]' :
+                                                                                        val === 'N/O' ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-slate-50 text-slate-200'
+                                                                                }`}>{val || '-'}</span>
                                                                         </td>
                                                                     );
                                                                 })}
@@ -490,7 +487,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                 </h3>
                                 <p className="text-xs font-black text-slate-400 mt-3 uppercase tracking-[0.3em] font-sans">Análisis consolidado del historial completo del curso</p>
                             </div>
-                            
+
                             <div className="relative min-w-[320px] group">
                                 <select
                                     value={selectedDashboardAmbito}
@@ -523,7 +520,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                         <div className="absolute inset-0 bg-gradient-to-br from-sky-500/20 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
                                         <div className="absolute top-0 right-0 w-96 h-96 bg-sky-500/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
                                         <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full -ml-32 -mb-32 blur-3xl"></div>
-                                        
+
                                         <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
                                             <div className="p-10 bg-white/5 backdrop-blur-2xl rounded-[3.5rem] border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-700">
                                                 <TrendingUp className="w-20 h-20 text-sky-400" />
@@ -559,7 +556,7 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                             <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] whitespace-nowrap">Desglose Técnico por Núcleo</h4>
                                             <div className="h-px flex-1 bg-gradient-to-r from-slate-100 to-transparent"></div>
                                         </div>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                             {Object.entries(currentAmbito.nucleos).map(([name, ns]: any) => {
                                                 const lp = (ns.L / (ns.total || 1)) * 100;
@@ -573,13 +570,13 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                 {ns.total} EVALS.
                                                             </div>
                                                         </div>
-                                                        
+
                                                         <div className="h-5 w-full bg-slate-200/50 rounded-full overflow-hidden flex shadow-inner mb-6">
                                                             <div style={{ width: `${lp}%` }} className="h-full bg-sky-500 shadow-[inset_-4px_0_8px_rgba(0,0,0,0.1)] transition-all duration-1000"></div>
                                                             <div style={{ width: `${mlp}%` }} className="h-full bg-emerald-400 shadow-[inset_-4px_0_8px_rgba(0,0,0,0.1)] transition-all duration-1000"></div>
                                                             <div style={{ width: `${nop}%` }} className="h-full bg-slate-200 transition-all duration-1000"></div>
                                                         </div>
-                                                        
+
                                                         <div className="flex justify-between items-center text-[10px] font-black tracking-widest text-slate-500 px-2 uppercase italic">
                                                             <div className="flex gap-8">
                                                                 <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-sky-500"></div> Logro: {lp.toFixed(0)}%</span>
@@ -598,102 +595,103 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                     </div>
 
                     {/* HIDDEN FULL REPORT PDF CONTAINER */}
-                    <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '297mm', pointerEvents: 'none' }} aria-hidden="true">
-                        <div id="pdf-full-report" className="bg-white p-12 font-sans" style={{ width: '297mm' }}>
-                            <div className="border-b-[12px] border-slate-900 pb-10 mb-10 flex justify-between items-center">
-                                <div className="flex items-center gap-8">
-                                    <Star className="text-amber-400 w-20 h-20 fill-amber-400" />
+                    <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '210mm', pointerEvents: 'none' }} aria-hidden="true">
+                        <div id="pdf-full-report" className="bg-white font-sans" style={{ width: '210mm', padding: '8mm' }}>
+                            {/* ── CABECERA ── */}
+                            <div style={{ borderBottom: '6px solid #0f172a', paddingBottom: '6mm', marginBottom: '6mm', display: 'flex', justifyContent: 'space-between', alignItems: 'center', breakInside: 'avoid' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <Star style={{ color: '#f59e0b', fill: '#f59e0b', width: 40, height: 40 }} />
                                     <div>
-                                        <h1 className="text-7xl font-black italic tracking-tighter text-slate-900">Planifica</h1>
-                                        <p className="text-sm font-black uppercase tracking-[0.8em] text-sky-500 mt-2">Reporte Consolidado de Seguimiento Histórico</p>
+                                        <h1 style={{ fontSize: 28, fontWeight: 900, fontStyle: 'italic', letterSpacing: '-1px', margin: 0, color: '#0f172a' }}>Planifica</h1>
+                                        <p style={{ fontSize: 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '3px', color: '#0ea5e9', margin: '2px 0 0' }}>Reporte Consolidado · Seguimiento Histórico</p>
                                     </div>
                                 </div>
-                                <div className="text-right bg-slate-50 p-8 rounded-[2.5rem] border-4 border-slate-100">
-                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Fecha de Reporte</p>
-                                    <p className="text-2xl font-black italic text-slate-800">{new Date().toLocaleDateString('es-CL')}</p>
+                                <div style={{ textAlign: 'right', background: '#f8fafc', padding: '8px 14px', borderRadius: 12, border: '2px solid #e2e8f0' }}>
+                                    <p style={{ fontSize: 7, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', margin: 0 }}>Fecha</p>
+                                    <p style={{ fontSize: 13, fontWeight: 900, fontStyle: 'italic', color: '#1e293b', margin: '2px 0 0' }}>{new Date().toLocaleDateString('es-CL')}</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-8 mb-16">
-                                <div className="bg-sky-50 p-8 rounded-[3rem] border-2 border-sky-100">
-                                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest mb-2">Entidad</p>
-                                    <p className="text-2xl font-black text-slate-800">{child ? `${child.firstName} ${child.lastName}` : 'General Clase'}</p>
+                            {/* ── FICHA RESUMEN ── */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10, breakInside: 'avoid' }}>
+                                <div style={{ background: '#eff6ff', padding: '8px 12px', borderRadius: 10, border: '1px solid #bfdbfe' }}>
+                                    <p style={{ fontSize: 7, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase', margin: 0 }}>Entidad</p>
+                                    <p style={{ fontSize: 13, fontWeight: 900, color: '#1e293b', margin: '2px 0 0' }}>{child ? `${child.firstName} ${child.lastName}` : 'General Clase'}</p>
                                 </div>
-                                <div className="bg-amber-50 p-8 rounded-[3rem] border-2 border-amber-100">
-                                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2">Registros</p>
-                                    <p className="text-2xl font-black text-slate-800">{childEvaluations.length} Sesiones</p>
+                                <div style={{ background: '#fffbeb', padding: '8px 12px', borderRadius: 10, border: '1px solid #fde68a' }}>
+                                    <p style={{ fontSize: 7, fontWeight: 900, color: '#d97706', textTransform: 'uppercase', margin: 0 }}>Sesiones</p>
+                                    <p style={{ fontSize: 13, fontWeight: 900, color: '#1e293b', margin: '2px 0 0' }}>{childEvaluations.length}</p>
                                 </div>
-                                <div className="bg-emerald-50 p-8 rounded-[3rem] border-2 border-emerald-100">
-                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Población</p>
-                                    <p className="text-2xl font-black text-slate-800">{child ? 'Individual' : `${children.length} Alumnos`}</p>
+                                <div style={{ background: '#f0fdf4', padding: '8px 12px', borderRadius: 10, border: '1px solid #bbf7d0' }}>
+                                    <p style={{ fontSize: 7, fontWeight: 900, color: '#16a34a', textTransform: 'uppercase', margin: 0 }}>Población</p>
+                                    <p style={{ fontSize: 13, fontWeight: 900, color: '#1e293b', margin: '2px 0 0' }}>{child ? 'Individual' : `${children.length} Alumnos`}</p>
                                 </div>
                             </div>
 
-                            {/* Dashboard Highlights for ALL Ambitos */}
-                            <div className="space-y-12 mb-20 bg-slate-50/50 p-12 rounded-[5rem] border-4 border-slate-100">
-                                <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest italic mb-10 flex items-center gap-4">
-                                    <TrendingUp className="w-8 h-8 text-sky-500" />
-                                    Análisis de Logros por Ámbitos (Variantes)
+                            {/* ── LOGROS POR ÁMBITO ── */}
+                            <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: 12, border: '2px solid #e2e8f0', marginBottom: 10, breakInside: 'avoid' }}>
+                                <h3 style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', color: '#0ea5e9', display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 8px' }}>
+                                    <TrendingUp style={{ width: 14, height: 14 }} />
+                                    Análisis de Logros por Ámbitos
                                 </h3>
-                                <div className="grid grid-cols-2 gap-10">
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                                     {ambitos.map(amb => {
                                         const stats = calculateStats(childEvaluations)[amb];
                                         if (!stats || stats.total === 0) return null;
                                         const p = ((stats.L / stats.total) * 100).toFixed(0);
                                         return (
-                                            <div key={amb} className="bg-white p-10 rounded-[4rem] border-4 border-slate-100 shadow-sm flex items-center justify-between">
-                                                <div className="max-w-[70%]">
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Ámbito</p>
-                                                    <h4 className="text-lg font-black text-slate-800 italic leading-tight uppercase">{amb}</h4>
+                                            <div key={amb} style={{ background: '#fff', padding: '8px 12px', borderRadius: 10, border: '2px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', breakInside: 'avoid' }}>
+                                                <div>
+                                                    <p style={{ fontSize: 6, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', margin: 0 }}>Ámbito</p>
+                                                    <p style={{ fontSize: 9, fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', color: '#1e293b', margin: '2px 0 0', maxWidth: 130, lineHeight: 1.2 }}>{amb}</p>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-5xl font-black text-sky-500 tracking-tighter">{p}%</p>
-                                                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Logro (L)</p>
-                                                </div>
+                                                <p style={{ fontSize: 24, fontWeight: 900, color: '#0ea5e9', margin: 0, letterSpacing: '-1px' }}>{p}%</p>
                                             </div>
                                         );
                                     })}
                                 </div>
                             </div>
 
-                            {/* Detailed Nucleo Breakdown for ALL Ambitos */}
+                            {/* ── DESGLOSE POR NÚCLEOS ── */}
                             <div className="html2pdf__page-break"></div>
-                            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-widest italic mb-12 flex items-center gap-6">
-                                <div className="w-12 h-px bg-slate-200"></div>
-                                Desglose por Núcleos (Análisis Técnico)
-                                <div className="flex-1 h-px bg-slate-200"></div>
+                            <h3 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', color: '#1e293b', fontStyle: 'italic', margin: '10px 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 24, height: 2, background: '#e2e8f0' }}></div>
+                                Desglose por Núcleos
+                                <div style={{ flex: 1, height: 2, background: '#e2e8f0' }}></div>
                             </h3>
 
-                            <div className="space-y-16">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {ambitos.map(amb => {
                                     const stats = calculateStats(childEvaluations)[amb];
                                     if (!stats || stats.total === 0) return null;
                                     return (
-                                        <div key={amb} className="pdf-block bg-white p-12 rounded-[5rem] border-4 border-slate-100 shadow-sm overflow-hidden">
-                                            <div className="flex justify-between items-center mb-10 pb-6 border-b-4 border-slate-50">
-                                                <h4 className="text-2xl font-black text-slate-800 italic uppercase">{amb}</h4>
-                                                <span className="bg-sky-50 text-sky-600 px-6 py-2 rounded-2xl font-black text-xs border-2 border-sky-100">
-                                                    {((stats.L / stats.total) * 100).toFixed(0)}% ÉXITO
+                                        <div key={amb} className="pdf-no-break" style={{ background: '#fff', padding: '10px 12px', borderRadius: 12, border: '2px solid #e2e8f0', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, paddingBottom: 6, borderBottom: '2px solid #f1f5f9' }}>
+                                                <h4 style={{ fontSize: 10, fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', color: '#1e293b', margin: 0 }}>{amb}</h4>
+                                                <span style={{ background: '#eff6ff', color: '#2563eb', padding: '2px 8px', borderRadius: 8, fontWeight: 900, fontSize: 9, border: '1px solid #bfdbfe' }}>
+                                                    {((stats.L / stats.total) * 100).toFixed(0)}% Logro
                                                 </span>
                                             </div>
-                                            <div className="grid grid-cols-1 gap-10">
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                                 {Object.entries(stats.nucleos).map(([name, ns]: any) => {
                                                     const lp = (ns.L / (ns.total || 1)) * 100;
+                                                    const mlp = (ns.ML / (ns.total || 1)) * 100;
+                                                    const nop = (ns['N/O'] / (ns.total || 1)) * 100;
                                                     return (
-                                                        <div key={name} className="space-y-4">
-                                                            <div className="flex justify-between items-end">
-                                                                <p className="text-lg font-black text-slate-700 italic uppercase">{name}</p>
-                                                                <p className="text-[11px] font-black text-slate-400">{ns.total} Muestras</p>
+                                                        <div key={name} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 3 }}>
+                                                                <p style={{ fontSize: 9, fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', color: '#475569', margin: 0 }}>{name}</p>
+                                                                <p style={{ fontSize: 7, fontWeight: 900, color: '#94a3b8', margin: 0 }}>{ns.total} muestras</p>
                                                             </div>
-                                                            <div className="h-6 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
-                                                                <div style={{ width: `${lp}%` }} className="h-full bg-sky-500 shadow-[inset_-4px_0_8px_rgba(0,0,0,0.1)]"></div>
+                                                            <div style={{ height: 10, width: '100%', background: '#e2e8f0', borderRadius: 999, overflow: 'hidden', display: 'flex' }}>
+                                                                <div style={{ width: `${lp}%`, height: '100%', background: '#0ea5e9' }}></div>
+                                                                <div style={{ width: `${mlp}%`, height: '100%', background: '#34d399' }}></div>
+                                                                <div style={{ width: `${nop}%`, height: '100%', background: '#cbd5e1' }}></div>
                                                             </div>
-                                                            <div className="flex justify-between text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                                                <span>Logrado (L): {lp.toFixed(0)}%</span>
-                                                                <div className="flex gap-4">
-                                                                    <span>ML: {((ns.ML / (ns.total || 1)) * 100).toFixed(0)}%</span>
-                                                                    <span>N/O: {((ns['N/O'] / (ns.total || 1)) * 100).toFixed(0)}%</span>
-                                                                </div>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', marginTop: 2 }}>
+                                                                <span>L: {lp.toFixed(0)}%</span>
+                                                                <span>ML: {mlp.toFixed(0)}%</span>
+                                                                <span>N/O: {nop.toFixed(0)}%</span>
                                                             </div>
                                                         </div>
                                                     );
@@ -706,42 +704,37 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
 
                             {/* Chronological History List */}
                             <div className="html2pdf__page-break"></div>
-                            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-widest italic mb-12 flex items-center gap-6">
-                                <div className="w-12 h-px bg-slate-200"></div>
-                                Historial Detallado de Sesiones
-                                <div className="flex-1 h-px bg-slate-200"></div>
+                            <h3 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', color: '#1e293b', fontStyle: 'italic', margin: '10px 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 24, height: 2, background: '#e2e8f0' }}></div>
+                                Historial de Sesiones
+                                <div style={{ flex: 1, height: 2, background: '#e2e8f0' }}></div>
                             </h3>
-                            
-                            <div className="space-y-16">
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {childEvaluations.map((ev, idx) => (
-                                    <div key={ev.id} className="pdf-block bg-white p-10 rounded-[4rem] border-4 border-slate-100 relative shadow-sm">
-                                        <div className="absolute top-8 right-10 flex items-center gap-4">
-                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Sesión {childEvaluations.length - idx}</span>
-                                            <span className="bg-slate-50 px-4 py-2 rounded-xl text-lg font-black italic border2 border-slate-100">{new Date(ev.created_at).toLocaleDateString('es-CL')}</span>
+                                    <div key={ev.id} className="pdf-no-break" style={{ background: '#fff', padding: '10px 12px', borderRadius: 12, border: '2px solid #e2e8f0', position: 'relative', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                                        <div style={{ position: 'absolute', top: 10, right: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <span style={{ fontSize: 7, fontWeight: 900, color: '#cbd5e1', textTransform: 'uppercase' }}>Sesión {childEvaluations.length - idx}</span>
+                                            <span style={{ background: '#f8fafc', padding: '2px 8px', borderRadius: 8, fontSize: 9, fontWeight: 900, fontStyle: 'italic', border: '1px solid #e2e8f0' }}>{new Date(ev.created_at).toLocaleDateString('es-CL')}</span>
                                         </div>
-                                        <div className="mb-8">
-                                            <h4 className="text-xl font-black text-slate-800 italic uppercase">{ev.level}</h4>
-                                            <p className="text-xs font-black text-sky-500 uppercase tracking-widest mt-1">{ev.establishment || 'Educación'}</p>
+                                        <div style={{ marginBottom: 6 }}>
+                                            <h4 style={{ fontSize: 10, fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', color: '#1e293b', margin: 0 }}>{ev.level}</h4>
+                                            <p style={{ fontSize: 7, fontWeight: 900, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '2px', margin: '2px 0 0' }}>{ev.establishment || 'Educación'}</p>
                                         </div>
-                                        <div className="space-y-4">
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                             {(ev.indicators || []).map((ind: any, i: number) => {
                                                 let res = '-';
                                                 if (child?.id) {
                                                     res = ind.evaluationsByChild?.[child.id] || ind.finalAchievement;
                                                 } else {
                                                     const v = Object.values(ind.evaluationsByChild || {});
-                                                    res = `${v.filter(x => x === 'L').length} L / ${v.length}`;
+                                                    res = `${(v as string[]).filter(x => x === 'L').length} L / ${v.length}`;
                                                 }
+                                                const resColor = child && res === 'L' ? '#10b981' : child && res === 'ML' ? '#f59e0b' : child && res === 'N/O' ? '#ef4444' : '#64748b';
                                                 return (
-                                                    <div key={i} className="flex justify-between items-center p-6 bg-slate-50/50 rounded-2xl border-2 border-slate-50/50">
-                                                        <span className="text-sm font-bold text-slate-700 max-w-[80%]">{ind.text}</span>
-                                                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black shadow-sm ${
-                                                            child && res === 'L' ? 'bg-emerald-500 text-white' :
-                                                            child && res === 'ML' ? 'bg-amber-500 text-white' :
-                                                            child && res === 'N/O' ? 'bg-rose-500 text-white' : 
-                                                            !child ? 'bg-slate-800 text-white' :
-                                                            'bg-slate-200 text-slate-400'
-                                                        }`}>{res}</span>
+                                                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', background: '#f8fafc', borderRadius: 8 }}>
+                                                        <span style={{ fontSize: 8, fontWeight: 700, color: '#475569', maxWidth: '80%', lineHeight: 1.3 }}>{ind.text}</span>
+                                                        <span style={{ padding: '2px 7px', borderRadius: 6, fontSize: 8, fontWeight: 900, color: '#fff', background: resColor, whiteSpace: 'nowrap', marginLeft: 6 }}>{res}</span>
                                                     </div>
                                                 );
                                             })}
@@ -750,17 +743,17 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                 ))}
                             </div>
 
-                            <div className="mt-24 pt-12 border-t-8 border-slate-900 flex justify-between">
-                                <div className="w-1/2">
-                                    <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 italic">Sistema de Gestión Curricular - Planifica 2026</p>
-                                    <div className="flex gap-4">
-                                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div> <span className="text-[10px] font-black text-slate-500">L: Logrado</span></div>
-                                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500"></div> <span className="text-[10px] font-black text-slate-500">ML: Med. Logrado</span></div>
-                                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-rose-500"></div> <span className="text-[10px] font-black text-slate-500">N/O: No Obs.</span></div>
+                            <div style={{ marginTop: 14, paddingTop: 8, borderTop: '4px solid #0f172a', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                                <div>
+                                    <p style={{ fontSize: 7, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontStyle: 'italic', margin: '0 0 4px' }}>Sistema de Gestión Curricular · Planifica 2026</p>
+                                    <div style={{ display: 'flex', gap: 10 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }}></div><span style={{ fontSize: 7, fontWeight: 900, color: '#64748b' }}>L: Logrado</span></div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }}></div><span style={{ fontSize: 7, fontWeight: 900, color: '#64748b' }}>ML: Med. Logrado</span></div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }}></div><span style={{ fontSize: 7, fontWeight: 900, color: '#64748b' }}>N/O: No Observado</span></div>
                                     </div>
                                 </div>
-                                <div className="text-center w-80 border-t-8 border-slate-100 pt-6">
-                                    <p className="text-sm font-black uppercase text-slate-400 italic tracking-widest">Firma y Timbre Directivo</p>
+                                <div style={{ textAlign: 'center', width: 160, borderTop: '4px solid #e2e8f0', paddingTop: 6 }}>
+                                    <p style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase', color: '#94a3b8', fontStyle: 'italic', letterSpacing: '1px' }}>Firma y Timbre</p>
                                 </div>
                             </div>
                         </div>

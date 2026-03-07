@@ -102,6 +102,11 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
     };
 
     const startEvaluation = () => {
+        if (children.length === 0) {
+            alert("No tienes niños/as en tu Listado Base. Serás redirigido/a para agregar alumnos.");
+            setView('children-list');
+            return;
+        }
         if (selectedObjectives.length === 0) {
             alert("Selecciona al menos un objetivo de aprendizaje.");
             return;
@@ -115,6 +120,11 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
 
     const handleSave = async () => {
         if (!session?.user?.id) return;
+        if (children.length === 0) {
+            alert("No tienes niños/as en tu Listado Base. Serás redirigido/a para agregar alumnos.");
+            setView('children-list');
+            return;
+        }
         if (selectedChildIds.length === 0) {
             alert("Selecciona al menos un niño/a para evaluar.");
             return;
@@ -270,8 +280,8 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                                     setTrackingChild(null);
                                 }}
                                 className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${isGeneralTracking
-                                        ? 'bg-slate-900 border-slate-800 text-white shadow-lg'
-                                        : 'bg-white border-slate-50 text-slate-400 hover:border-slate-200'
+                                    ? 'bg-slate-900 border-slate-800 text-white shadow-lg'
+                                    : 'bg-white border-slate-50 text-slate-400 hover:border-slate-200'
                                     }`}
                             >
                                 <Target className={`w-8 h-8 ${isGeneralTracking ? 'text-sky-400' : 'text-slate-200 group-hover:text-sky-200'}`} />
@@ -290,8 +300,8 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                                     }
                                 }}
                                 className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${(viewMode === 'new' && selectedChildIds.includes(child.id)) || (viewMode === 'tracking' && trackingChild?.id === child.id)
-                                        ? (viewMode === 'new' ? 'bg-rose-500 border-rose-400 text-white shadow-lg' : 'bg-sky-500 border-sky-400 text-white shadow-lg')
-                                        : 'bg-white border-slate-50 text-slate-400 hover:border-sky-100'
+                                    ? (viewMode === 'new' ? 'bg-rose-500 border-rose-400 text-white shadow-lg' : 'bg-sky-500 border-sky-400 text-white shadow-lg')
+                                    : 'bg-white border-slate-50 text-slate-400 hover:border-sky-100'
                                     }`}
                             >
                                 <Baby className={`w-8 h-8 ${((viewMode === 'new' && selectedChildIds.includes(child.id)) || (viewMode === 'tracking' && trackingChild?.id === child.id)) ? 'text-white' : 'text-slate-200 group-hover:text-sky-200'}`} />
@@ -484,9 +494,9 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({
                                                         value={evalMatrix[obj.id]?.[child.id] || ''}
                                                         onChange={(e) => handleEvalChange(child.id, obj.id.toString(), e.target.value)}
                                                         className={`w-full p-2.5 rounded-xl text-[11px] font-black border-2 transition-all outline-none appearance-none text-center cursor-pointer hover:shadow-md ${evalMatrix[obj.id]?.[child.id] === 'L' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' :
-                                                                evalMatrix[obj.id]?.[child.id] === 'ML' ? 'bg-amber-50 border-amber-300 text-amber-700' :
-                                                                    evalMatrix[obj.id]?.[child.id] === 'N/O' ? 'bg-slate-100 border-slate-300 text-slate-600' :
-                                                                        'bg-slate-50 border-slate-100 text-slate-400'
+                                                            evalMatrix[obj.id]?.[child.id] === 'ML' ? 'bg-amber-50 border-amber-300 text-amber-700' :
+                                                                evalMatrix[obj.id]?.[child.id] === 'N/O' ? 'bg-slate-100 border-slate-300 text-slate-600' :
+                                                                    'bg-slate-50 border-slate-100 text-slate-400'
                                                             }`}
                                                     >
                                                         <option value="">-</option>
