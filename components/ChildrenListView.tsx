@@ -17,6 +17,7 @@ interface ChildrenListViewProps {
 const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, setChildren, session }) => {
     const [showForm, setShowForm] = useState(false);
 
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -29,6 +30,18 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
 
     const handleAddChild = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!session?.user?.id) {
+            alert("Sesión no válida. Por favor, vuelve a iniciar sesión.");
+            return;
+        }
+
+        if (!formData.firstName || !formData.lastName || !formData.birthDate) {
+            alert("Por favor completa los campos obligatorios (nombre, apellido y fecha de nacimiento).");
+            return;
+        }
+
+        setIsSaving(true);
         try {
             const newChildData = {
                 user_id: session.user.id,
@@ -47,7 +60,10 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase error:", error);
+                throw new Error(error.message || "Error al insertar en la base de datos");
+            }
 
             if (data) {
                 const newChild: Child = {
@@ -72,10 +88,13 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                     allergies: '',
                     otherInfo: ''
                 });
+                alert("¡Niño/a agregado/a con éxito!");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error adding child:", err);
-            alert("No se pudo guardar el niño. Revisa la conexión.");
+            alert(`No se pudo guardar: ${err.message || "Revisa la conexión o si la tabla existe"}`);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -245,10 +264,20 @@ const ChildrenListView: React.FC<ChildrenListViewProps> = ({ setView, children, 
                     <div className="flex justify-end pt-4">
                         <button
                             type="submit"
-                            className="bg-emerald-500 hover:bg-emerald-600 text-white px-12 py-5 rounded-3xl font-black text-xl shadow-xl shadow-emerald-100 active:scale-95 transition-all flex items-center gap-3"
+                            disabled={isSaving}
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white px-12 py-5 rounded-3xl font-black text-xl shadow-xl shadow-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 min-w-[300px]"
                         >
-                            <UserPlus className="w-6 h-6" />
-                            Guardar en Listado
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                    Guardando...
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus className="w-6 h-6" />
+                                    Guardar en Listado
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>
