@@ -57,11 +57,15 @@ const App: React.FC = () => {
   const [children, setChildren] = useState<Child[]>([]);
   const [focusedAssessment, setFocusedAssessment] = useState<GeneratedAssessment | null>(null);
 
-  const fetchSavedItems = useCallback(async () => {
+  const fetchSavedItems = useCallback(async (userId: string) => {
     setIsSyncing(true);
     setErrorMessage(null);
     try {
-      const { data, error } = await supabase.from('saved_plans').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('saved_plans')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       setSavedItems(data || []);
     } catch (err: any) {
@@ -74,9 +78,13 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const fetchChildren = useCallback(async () => {
+  const fetchChildren = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await supabase.from('children').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('children')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       if (data) {
         setChildren(data.map(item => ({
@@ -111,12 +119,12 @@ const App: React.FC = () => {
       } else {
         setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
       }
-      fetchSavedItems();
-      fetchChildren();
+      fetchSavedItems(userId);
+      fetchChildren(userId);
     } catch (err: any) {
       setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
-      fetchSavedItems();
-      fetchChildren();
+      fetchSavedItems(userId);
+      fetchChildren(userId);
     }
   }, [fetchSavedItems, fetchChildren]);
 
