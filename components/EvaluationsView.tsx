@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { Target, ArrowLeft, Save, UserPlus, Baby, GraduationCap, Calendar, Building2, Hash, Sparkles } from 'lucide-react';
 import { Child, EvaluationSession, EvaluationIndicator, AchievementLevel } from '../types';
 import { supabase } from '../supabaseClient';
+import EvaluationTrackingView from './EvaluationTrackingView';
 
 interface EvaluationsViewProps {
     setView: (view: any) => void;
     children: Child[];
     session: any;
+    evaluations: any[];
+    onFetchEvaluations: () => void;
 }
 
 const DEFAULT_INDICATORS: string[] = [
@@ -17,8 +18,10 @@ const DEFAULT_INDICATORS: string[] = [
     "Expresa sus necesidades y emociones de forma clara."
 ];
 
-const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, session }) => {
+const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, session, evaluations, onFetchEvaluations }) => {
     const [isSaving, setIsSaving] = useState(false);
+    const [viewMode, setViewMode] = useState<'new' | 'tracking'>('new');
+    const [trackingChild, setTrackingChild] = useState<Child | null>(null);
     const [sessionData, setSessionData] = useState<Partial<EvaluationSession>>({
         establishment: '',
         rbd: '',
@@ -97,6 +100,7 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
 
             if (error) throw error;
             alert("¡Evaluación guardada exitosamente!");
+            onFetchEvaluations();
             setView('home');
         } catch (err: any) {
             console.error("Error saving evaluation:", err);
@@ -181,11 +185,22 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-black text-sky-500 uppercase tracking-[0.3em] flex items-center gap-2">
                         <Baby className="w-4 h-4" />
-                        Niños/as en Evaluación
+                        {viewMode === 'new' ? 'Niños/as en Evaluación' : 'Selecciona para ver Seguimiento'}
                     </h3>
-                    <span className="bg-sky-50 text-sky-600 px-4 py-1 rounded-full text-xs font-black">
-                        {sessionData.childIds?.length} Seleccionados
-                    </span>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={() => setViewMode('new')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${viewMode === 'new' ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                        >
+                            Nueva
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('tracking')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${viewMode === 'tracking' ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                        >
+                            Seguimiento
+                        </button>
+                    </div>
                 </div>
 
                 {children.length === 0 ? (
@@ -201,13 +216,20 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
                         {children.map(child => (
                             <button
                                 key={child.id}
-                                onClick={() => toggleChild(child.id)}
-                                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${sessionData.childIds?.includes(child.id)
-                                        ? 'bg-sky-500 border-sky-400 text-white shadow-lg'
+                                onClick={() => {
+                                    if (viewMode === 'new') {
+                                        toggleChild(child.id);
+                                    } else {
+                                        setTrackingChild(child);
+                                    }
+                                }}
+                                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 group ${
+                                    (viewMode === 'new' && sessionData.childIds?.includes(child.id)) || (viewMode === 'tracking' && trackingChild?.id === child.id)
+                                        ? (viewMode === 'new' ? 'bg-rose-500 border-rose-400 text-white shadow-lg' : 'bg-sky-500 border-sky-400 text-white shadow-lg')
                                         : 'bg-white border-slate-50 text-slate-400 hover:border-sky-100'
                                     }`}
                             >
-                                <Baby className={`w-8 h-8 ${sessionData.childIds?.includes(child.id) ? 'text-white' : 'text-slate-200 group-hover:text-sky-200'}`} />
+                                <Baby className={`w-8 h-8 ${((viewMode === 'new' && sessionData.childIds?.includes(child.id)) || (viewMode === 'tracking' && trackingChild?.id === child.id)) ? 'text-white' : 'text-slate-200 group-hover:text-sky-200'}`} />
                                 <span className="text-[10px] font-black uppercase truncate w-full text-center">{child.firstName}</span>
                             </button>
                         ))}
@@ -215,8 +237,15 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
                 )}
             </div>
 
-            {/* Matriz de Evaluación */}
-            <div className="bg-white p-8 md:p-10 rounded-[4rem] shadow-2xl border-4 border-rose-50 space-y-8 overflow-hidden">
+            {viewMode === 'tracking' && trackingChild ? (
+                <EvaluationTrackingView 
+                    child={trackingChild} 
+                    evaluations={evaluations} 
+                    onBack={() => setTrackingChild(null)} 
+                />
+            ) : viewMode === 'new' ? (
+                /* Matriz de Evaluación */
+                <div className="bg-white p-8 md:p-10 rounded-[4rem] shadow-2xl border-4 border-rose-50 space-y-8 overflow-hidden">
                 <div className="flex items-center gap-3">
                     <div className="p-3 bg-rose-100 rounded-2xl">
                         <sparkles className="w-5 h-5 text-rose-600" />
@@ -292,6 +321,12 @@ const EvaluationsView: React.FC<EvaluationsViewProps> = ({ setView, children, se
                     </button>
                 </div>
             </div>
+            ) : (
+                <div className="bg-white p-20 rounded-[3rem] shadow-xl border-4 border-dashed border-slate-100 text-center space-y-4">
+                    <User className="w-16 h-16 text-slate-200 mx-auto" />
+                    <p className="text-slate-400 font-bold text-xl">Selecciona un niño/a arriba para ver su historial de seguimiento.</p>
+                </div>
+            )}
         </div>
     );
 };

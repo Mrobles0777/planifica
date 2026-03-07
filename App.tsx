@@ -55,6 +55,7 @@ const App: React.FC = () => {
 
   const [savedItems, setSavedItems] = useState<any[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
+  const [evaluations, setEvaluations] = useState<any[]>([]);
   const [focusedAssessment, setFocusedAssessment] = useState<GeneratedAssessment | null>(null);
 
   const fetchSavedItems = useCallback(async () => {
@@ -110,6 +111,23 @@ const App: React.FC = () => {
     }
   }, [session?.user?.id]);
 
+  const fetchEvaluations = useCallback(async () => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('evaluations')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setEvaluations(data || []);
+    } catch (err) {
+      console.error("Fetch evaluations error:", err);
+    }
+  }, [session?.user?.id]);
+
   const fetchUserData = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
@@ -127,12 +145,14 @@ const App: React.FC = () => {
       }
       fetchSavedItems();
       fetchChildren();
+      fetchEvaluations();
     } catch (err: any) {
       setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
       fetchSavedItems();
       fetchChildren();
+      fetchEvaluations();
     }
-  }, [fetchSavedItems, fetchChildren]);
+  }, [fetchSavedItems, fetchChildren, fetchEvaluations]);
 
   useEffect(() => {
     // Check session immediately and set up subscription
@@ -663,7 +683,13 @@ const App: React.FC = () => {
         )}
 
         {view === 'evaluations' && (
-          <EvaluationsView setView={handleViewChange} children={children} session={session} />
+          <EvaluationsView 
+            setView={handleViewChange} 
+            children={children} 
+            session={session} 
+            evaluations={evaluations}
+            onFetchEvaluations={fetchEvaluations}
+          />
         )}
 
         {view === 'children-list' && (
