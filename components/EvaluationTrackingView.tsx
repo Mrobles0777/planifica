@@ -204,8 +204,8 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                         <thead>
                                                             <tr>
                                                                 <th className="p-0 border-b-2 border-r-2 border-rose-200 bg-rose-50/50 min-w-[200px] relative h-24">
-                                                                    <div className="absolute top-2 right-4 text-[8px] font-black text-rose-400 uppercase tracking-widest">Indicadores</div>
-                                                                    <div className="absolute bottom-2 left-4 text-[8px] font-black text-rose-400 uppercase tracking-widest">Nombres</div>
+                                                                    <div className="absolute top-2 right-4 text-[8px] font-black text-rose-400 uppercase tracking-widest">Nombres</div>
+                                                                    <div className="absolute bottom-2 left-4 text-[8px] font-black text-rose-400 uppercase tracking-widest">Indicadores</div>
                                                                     <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top right, transparent calc(50% - 1px), #fecdd3, transparent calc(50% + 1px))' }}></div>
                                                                 </th>
                                                                 {(ev.child_ids || []).map((cid: string, idx: number) => {
@@ -422,8 +422,8 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                         <line x1="0" y1="0" x2="100%" y2="100%" stroke="#e2e8f0" strokeWidth="1" />
                                                                     </svg>
                                                                 </div>
-                                                                <div className="absolute top-3 right-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Indicadores</div>
-                                                                <div className="absolute bottom-3 left-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombres</div>
+                                                                <div className="absolute top-3 right-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombres</div>
+                                                                <div className="absolute bottom-3 left-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Indicadores</div>
                                                             </th>
                                                             {(ev.child_ids || []).map((cid: string, idx: number) => {
                                                                 const childData = (children || []).find(c => c.id === cid);
