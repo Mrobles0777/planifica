@@ -71,16 +71,16 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
         return ambitosMap;
     };
 
-    const exportToPDF = async (evaluation: any, type: 'individual' | 'general' = 'individual') => {
+    const exportToPDF = async (evaluation: any, type: 'individual' | 'general' | 'full' = 'individual') => {
         try {
-            const elementId = type === 'individual' ? `pdf-eval-${evaluation.id}` : `pdf-matrix-${evaluation.id}`;
+            const elementId = type === 'full' ? 'pdf-full-report' : (type === 'individual' ? `pdf-eval-${evaluation.id}` : `pdf-matrix-${evaluation.id}`);
             const element = document.getElementById(elementId);
             if (!element) return;
 
-            const isLandscape = type === 'general';
-            const dateStr = new Date(evaluation.created_at).toLocaleDateString('es-CL').replace(/\//g, '-');
+            const isLandscape = type !== 'individual';
+            const dateStr = new Date().toLocaleDateString('es-CL').replace(/\//g, '-');
             const sanitizedName = child.firstName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/gi, '_');
-            const fileName = `Planifica_${type === 'individual' ? 'Reporte' : 'Matriz'}_${sanitizedName}_${dateStr}.pdf`;
+            const fileName = `Planifica_${type === 'full' ? 'Historial_Completo' : (type === 'individual' ? 'Reporte' : 'Matriz')}_${sanitizedName}.pdf`;
 
             const opt = {
                 margin: isLandscape ? 5 : 0,
@@ -122,6 +122,15 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                 <div>
                     <h2 className="text-3xl font-black text-slate-800">Seguimiento: {child.firstName} {child.lastName}</h2>
                     <p className="text-sky-500 font-bold uppercase tracking-wider text-xs italic">Historial acumulado de progresos</p>
+                </div>
+                <div className="flex-1 flex justify-end">
+                    <button
+                        onClick={() => exportToPDF(null, 'full')}
+                        className="flex items-center gap-3 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-3xl font-black text-sm shadow-2xl transition-all active:scale-95 group"
+                    >
+                        <Download className="w-5 h-5 text-sky-400 group-hover:animate-bounce" />
+                        Reporte Completo
+                    </button>
                 </div>
             </div>
 
@@ -560,6 +569,119 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                 </div>
                             );
                         })()}
+                    </div>
+
+                    {/* HIDDEN FULL REPORT PDF CONTAINER */}
+                    <div style={{ position: 'fixed', left: '-10000px', top: 0, width: '297mm', pointerEvents: 'none' }} aria-hidden="true">
+                        <div id="pdf-full-report" className="bg-white p-12 font-sans" style={{ width: '297mm' }}>
+                            <div className="border-b-[12px] border-slate-900 pb-10 mb-10 flex justify-between items-center">
+                                <div className="flex items-center gap-8">
+                                    <Star className="text-amber-400 w-20 h-20 fill-amber-400" />
+                                    <div>
+                                        <h1 className="text-7xl font-black italic tracking-tighter text-slate-900">Planifica</h1>
+                                        <p className="text-sm font-black uppercase tracking-[0.8em] text-sky-500 mt-2">Reporte Consolidado de Seguimiento Histórico</p>
+                                    </div>
+                                </div>
+                                <div className="text-right bg-slate-50 p-8 rounded-[2.5rem] border-4 border-slate-100">
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Fecha de Reporte</p>
+                                    <p className="text-2xl font-black italic text-slate-800">{new Date().toLocaleDateString('es-CL')}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-8 mb-16">
+                                <div className="bg-sky-50 p-8 rounded-[3rem] border-2 border-sky-100">
+                                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest mb-2">Alumno/a</p>
+                                    <p className="text-2xl font-black text-slate-800">{child.firstName} {child.lastName}</p>
+                                </div>
+                                <div className="bg-amber-50 p-8 rounded-[3rem] border-2 border-amber-100">
+                                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2">Registros</p>
+                                    <p className="text-2xl font-black text-slate-800">{childEvaluations.length} Sesiones</p>
+                                </div>
+                                <div className="bg-emerald-50 p-8 rounded-[3rem] border-2 border-emerald-100">
+                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Estado</p>
+                                    <p className="text-2xl font-black text-slate-800">Finalizado</p>
+                                </div>
+                            </div>
+
+                            {/* Dashboard Highlights for ALL Ambitos */}
+                            <div className="space-y-12 mb-20 bg-slate-50/50 p-12 rounded-[5rem] border-4 border-slate-100">
+                                <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest italic mb-10 flex items-center gap-4">
+                                    <TrendingUp className="w-8 h-8 text-sky-500" />
+                                    Análisis de Logros por Ámbitos (Variantes)
+                                </h3>
+                                <div className="grid grid-cols-2 gap-10">
+                                    {ambitos.map(amb => {
+                                        const stats = calculateStats(childEvaluations)[amb];
+                                        if (!stats || stats.total === 0) return null;
+                                        const p = ((stats.L / stats.total) * 100).toFixed(0);
+                                        return (
+                                            <div key={amb} className="bg-white p-10 rounded-[4rem] border-4 border-slate-100 shadow-sm flex items-center justify-between">
+                                                <div className="max-w-[70%]">
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Ámbito</p>
+                                                    <h4 className="text-lg font-black text-slate-800 italic leading-tight uppercase">{amb}</h4>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-5xl font-black text-sky-500 tracking-tighter">{p}%</p>
+                                                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Logro (L)</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Chronological History List */}
+                            <div className="html2pdf__page-break"></div>
+                            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-widest italic mb-12 flex items-center gap-6">
+                                <div className="w-12 h-px bg-slate-200"></div>
+                                Historial Detallado de Sesiones
+                                <div className="flex-1 h-px bg-slate-200"></div>
+                            </h3>
+                            
+                            <div className="space-y-16">
+                                {childEvaluations.map((ev, idx) => (
+                                    <div key={ev.id} className="pdf-block bg-white p-10 rounded-[4rem] border-4 border-slate-100 relative shadow-sm">
+                                        <div className="absolute top-8 right-10 flex items-center gap-4">
+                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Sesión {childEvaluations.length - idx}</span>
+                                            <span className="bg-slate-50 px-4 py-2 rounded-xl text-lg font-black italic border2 border-slate-100">{new Date(ev.created_at).toLocaleDateString('es-CL')}</span>
+                                        </div>
+                                        <div className="mb-8">
+                                            <h4 className="text-xl font-black text-slate-800 italic uppercase">{ev.level}</h4>
+                                            <p className="text-xs font-black text-sky-500 uppercase tracking-widest mt-1">{ev.establishment || 'Educación'}</p>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {(ev.indicators || []).map((ind: any, i: number) => {
+                                                const res = ind.evaluationsByChild?.[child.id] || ind.finalAchievement;
+                                                return (
+                                                    <div key={i} className="flex justify-between items-center p-6 bg-slate-50/50 rounded-2xl border-2 border-slate-50/50">
+                                                        <span className="text-sm font-bold text-slate-700 max-w-[80%]">{ind.text}</span>
+                                                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black shadow-sm ${
+                                                            res === 'L' ? 'bg-emerald-500 text-white' :
+                                                            res === 'ML' ? 'bg-amber-500 text-white' :
+                                                            res === 'N/O' ? 'bg-rose-500 text-white' : 'bg-slate-200 text-slate-400'
+                                                        }`}>{res || '-'}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-24 pt-12 border-t-8 border-slate-900 flex justify-between">
+                                <div className="w-1/2">
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 italic">Sistema de Gestión Curricular - Planifica 2026</p>
+                                    <div className="flex gap-4">
+                                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div> <span className="text-[10px] font-black text-slate-500">L: Logrado</span></div>
+                                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500"></div> <span className="text-[10px] font-black text-slate-500">ML: Med. Logrado</span></div>
+                                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-rose-500"></div> <span className="text-[10px] font-black text-slate-500">N/O: No Obs.</span></div>
+                                    </div>
+                                </div>
+                                <div className="text-center w-80 border-t-8 border-slate-100 pt-6">
+                                    <p className="text-sm font-black uppercase text-slate-400 italic tracking-widest">Firma y Timbre Directivo</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
