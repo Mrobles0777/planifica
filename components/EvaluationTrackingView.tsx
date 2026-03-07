@@ -22,10 +22,18 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<Record<string, 'individual' | 'general'>>({});
     const [selectedDashboardAmbito, setSelectedDashboardAmbito] = useState<string>('Desarrollo Personal y Social');
+    // Filtro por nivel: activo por defecto cuando hay un niño seleccionado
+    const [levelFilterActive, setLevelFilterActive] = useState<boolean>(true);
 
-    const childEvaluations = child?.id
+    // Evaluaciones relevantes: si hay niño, filtra por child_id y opcionalmente por nivel
+    const baseEvaluations = child?.id
         ? (evaluations || []).filter(ev => ev.child_ids?.includes(child.id))
         : (evaluations || []);
+
+    const childEvaluations = (child?.id && levelFilterActive)
+        ? baseEvaluations.filter(ev => ev.level === child.level)
+        : baseEvaluations;
+
     const ambitos = Array.from(new Set(CURRICULUM_DATA.map(n => n.ambito)));
 
     const calculateStats = (evals: any | any[]) => {
@@ -119,22 +127,48 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Tracking View */}
-            <div className="flex items-center gap-6 bg-white p-8 rounded-[3rem] shadow-xl border-4 border-sky-50">
+            <div className="flex flex-wrap items-center gap-6 bg-white p-8 rounded-[3rem] shadow-xl border-4 border-sky-50">
                 <button
                     onClick={onBack}
                     className="p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors group"
                 >
                     <ArrowLeft className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                 </button>
-                <div>
+                <div className="flex-1 min-w-0">
                     <h2 className="text-3xl font-black text-slate-800">
                         {child ? `Seguimiento: ${child.firstName} ${child.lastName}` : 'Seguimiento General de Clase'}
                     </h2>
-                    <p className="text-sky-500 font-bold uppercase tracking-wider text-xs italic">
-                        {child ? 'Historial acumulado de progresos' : 'Consolidado de todas las evaluaciones del curso'}
-                    </p>
+                    <div className="flex items-center gap-3 flex-wrap mt-1">
+                        {child && (
+                            <span className="bg-sky-50 text-sky-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-sky-100">
+                                {child.level}
+                            </span>
+                        )}
+                        <p className="text-sky-500 font-bold uppercase tracking-wider text-xs italic">
+                            {child ? 'Historial acumulado de progresos' : 'Consolidado de todas las evaluaciones del curso'}
+                        </p>
+                    </div>
                 </div>
-                <div className="flex-1 flex justify-end">
+                <div className="flex items-center gap-3 flex-wrap justify-end">
+                    {/* Toggle de filtro por nivel — solo visible cuando hay un niño seleccionado */}
+                    {child && (
+                        <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200/50 shadow-inner">
+                            <button
+                                onClick={() => setLevelFilterActive(true)}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${levelFilterActive ? 'bg-white text-sky-600 shadow-md' : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                            >
+                                Solo {child.level}
+                            </button>
+                            <button
+                                onClick={() => setLevelFilterActive(false)}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${!levelFilterActive ? 'bg-white text-slate-800 shadow-md' : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                            >
+                                Todos
+                            </button>
+                        </div>
+                    )}
                     <button
                         onClick={() => exportToPDF(null, 'full')}
                         className="flex items-center gap-3 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-3xl font-black text-sm shadow-2xl transition-all active:scale-95 group"
@@ -149,6 +183,19 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                 <div className="bg-white p-20 rounded-[3rem] shadow-xl border-4 border-dashed border-slate-100 text-center space-y-4">
                     <FileText className="w-16 h-16 text-slate-200 mx-auto" />
                     <p className="text-slate-400 font-bold text-xl">Sin registros de evaluación.</p>
+                    {child && levelFilterActive && baseEvaluations.length > 0 && (
+                        <div className="space-y-2">
+                            <p className="text-slate-400 text-sm">
+                                Hay {baseEvaluations.length} sesión(es) en otros niveles.
+                            </p>
+                            <button
+                                onClick={() => setLevelFilterActive(false)}
+                                className="text-sky-500 font-black text-xs uppercase tracking-widest hover:underline"
+                            >
+                                Ver todas las sesiones →
+                            </button>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-12">
@@ -232,10 +279,10 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                 <div key={i} className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                                                     <span className="text-xs font-bold text-slate-700 leading-tight pr-4">{ind.text}</span>
                                                                     <span className={`px-4 py-2 rounded-xl text-[10px] font-black shadow-sm shrink-0 border ${child && result === 'L' ? 'bg-emerald-500 text-white border-emerald-400' :
-                                                                            child && result === 'ML' ? 'bg-amber-500 text-white border-amber-400' :
-                                                                                child && result === 'N/O' ? 'bg-slate-500 text-white border-slate-400' :
-                                                                                    !child ? 'bg-sky-50 text-sky-600 border-sky-100' :
-                                                                                        'bg-slate-50 text-slate-300 border-slate-100'
+                                                                        child && result === 'ML' ? 'bg-amber-500 text-white border-amber-400' :
+                                                                            child && result === 'N/O' ? 'bg-slate-500 text-white border-slate-400' :
+                                                                                !child ? 'bg-sky-50 text-sky-600 border-sky-100' :
+                                                                                    'bg-slate-50 text-slate-300 border-slate-100'
                                                                         }`}>
                                                                         {result}
                                                                     </span>
@@ -248,58 +295,89 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                         ) : (
                                             <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
                                                 <div className="bg-rose-50/30 rounded-[2.5rem] p-6 border-2 border-rose-100/30 overflow-hidden shadow-inner">
-                                                    <h5 className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-4 px-2">Matriz General de Clase</h5>
+                                                    <div className="flex items-center justify-between mb-4 px-2">
+                                                        <h5 className="text-[10px] font-black text-rose-600 uppercase tracking-widest">
+                                                            {child && levelFilterActive ? `Comp. Nivel ${child.level}` : 'Matriz General de Clase'}
+                                                        </h5>
+                                                        {/* Leyenda de highlight */}
+                                                        {child && (
+                                                            <span className="text-[9px] font-black text-sky-500 bg-sky-50 px-3 py-1 rounded-full border border-sky-100">
+                                                                ★ {child.firstName}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="overflow-x-auto custom-scrollbar -mx-2">
-                                                        <table className="w-full border-collapse">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th className="p-0 border-b-2 border-r-2 border-rose-100 bg-rose-50/50 min-w-[220px] relative h-28">
-                                                                        <div className="absolute top-3 right-5 text-[9px] font-black text-rose-400 uppercase tracking-widest">Nombres</div>
-                                                                        <div className="absolute bottom-3 left-5 text-[9px] font-black text-rose-400 uppercase tracking-widest">Indicadores</div>
-                                                                        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top right, transparent calc(50% - 1px), #fee2e2, transparent calc(50% + 1px))' }}></div>
-                                                                    </th>
-                                                                    {(ev.child_ids || []).map((cid: string, idx: number) => {
-                                                                        const childData = (children || []).find(c => c.id === cid);
-                                                                        return (
-                                                                            <th key={cid} className="p-0 border-b-2 border-r border-rose-100 bg-white min-w-[55px] relative">
-                                                                                <div className="absolute top-0 inset-x-0 py-1 bg-rose-50/50 text-[8px] font-black text-rose-300 border-b border-rose-100/50">{idx + 1}</div>
-                                                                                <div className="p-3 flex items-center justify-center min-h-[110px] pt-6">
-                                                                                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter whitespace-nowrap block" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                                                                                        {childData ? childData.firstName : `Niño ${idx + 1}`}
-                                                                                    </span>
-                                                                                </div>
+                                                        {(() => {
+                                                            // Filtrar los child_ids de la sesión según el modo y si hay niño seleccionado
+                                                            const sessionChildIds: string[] = ev.child_ids || [];
+                                                            const displayChildIds = (child && levelFilterActive)
+                                                                ? sessionChildIds.filter(cid => {
+                                                                    const cd = (children || []).find(c => c.id === cid);
+                                                                    return cd?.level === child.level;
+                                                                })
+                                                                : sessionChildIds;
+                                                            return (
+                                                                <table className="w-full border-collapse">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th className="p-0 border-b-2 border-r-2 border-rose-100 bg-rose-50/50 min-w-[220px] relative h-28">
+                                                                                <div className="absolute top-3 right-5 text-[9px] font-black text-rose-400 uppercase tracking-widest">Nombres</div>
+                                                                                <div className="absolute bottom-3 left-5 text-[9px] font-black text-rose-400 uppercase tracking-widest">Indicadores</div>
+                                                                                <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top right, transparent calc(50% - 1px), #fee2e2, transparent calc(50% + 1px))' }}></div>
                                                                             </th>
-                                                                        );
-                                                                    })}
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {(ev.indicators || []).map((ind: any, objIdx: number) => (
-                                                                    <tr key={objIdx} className="hover:bg-rose-50/20 transition-colors">
-                                                                        <td className="p-4 border-b border-r-2 border-rose-100 bg-white shadow-[2px_0_4px_rgba(0,0,0,0.02)]">
-                                                                            <div className="flex gap-3 items-center">
-                                                                                <span className="text-[10px] font-black bg-rose-500 text-white w-6 h-6 flex items-center justify-center rounded-lg shadow-sm shrink-0">{objIdx + 1}</span>
-                                                                                <span className="text-[11px] font-bold text-slate-700 leading-tight">{ind.text}</span>
-                                                                            </div>
-                                                                        </td>
-                                                                        {(ev.child_ids || []).map((cid: string) => {
-                                                                            const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
-                                                                            return (
-                                                                                <td key={cid} className="p-2 border-b border-r border-rose-50 text-center bg-white">
-                                                                                    <span className={`inline-block w-9 h-9 border-2 leading-8 rounded-xl text-[10px] font-black transition-all ${val === 'L' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm' :
-                                                                                            val === 'ML' ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm' :
-                                                                                                val === 'N/O' ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-sm' :
-                                                                                                    'text-slate-100 border-transparent bg-transparent'
+                                                                            {displayChildIds.map((cid: string, idx: number) => {
+                                                                                const childData = (children || []).find(c => c.id === cid);
+                                                                                const isHighlighted = child?.id === cid;
+                                                                                return (
+                                                                                    <th key={cid} className={`p-0 border-b-2 border-r min-w-[55px] relative ${isHighlighted ? 'border-sky-200 bg-sky-50' : 'border-rose-100 bg-white'
                                                                                         }`}>
-                                                                                        {val || '-'}
-                                                                                    </span>
+                                                                                        {isHighlighted && (
+                                                                                            <div className="absolute top-0 inset-x-0 h-0.5 bg-sky-400"></div>
+                                                                                        )}
+                                                                                        <div className={`absolute top-0 inset-x-0 py-1 text-[8px] font-black border-b ${isHighlighted ? 'bg-sky-50 text-sky-500 border-sky-100' : 'bg-rose-50/50 text-rose-300 border-rose-100/50'
+                                                                                            }`}>{idx + 1}</div>
+                                                                                        <div className="p-3 flex items-center justify-center min-h-[110px] pt-6">
+                                                                                            <span className={`text-[10px] font-black uppercase tracking-tighter whitespace-nowrap block ${isHighlighted ? 'text-sky-600' : 'text-slate-600'
+                                                                                                }`} style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                                                                                                {childData ? childData.firstName : `Niño ${idx + 1}`}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    </th>
+                                                                                );
+                                                                            })}
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {(ev.indicators || []).map((ind: any, objIdx: number) => (
+                                                                            <tr key={objIdx} className="hover:bg-rose-50/20 transition-colors">
+                                                                                <td className="p-4 border-b border-r-2 border-rose-100 bg-white shadow-[2px_0_4px_rgba(0,0,0,0.02)]">
+                                                                                    <div className="flex gap-3 items-center">
+                                                                                        <span className="text-[10px] font-black bg-rose-500 text-white w-6 h-6 flex items-center justify-center rounded-lg shadow-sm shrink-0">{objIdx + 1}</span>
+                                                                                        <span className="text-[11px] font-bold text-slate-700 leading-tight">{ind.text}</span>
+                                                                                    </div>
                                                                                 </td>
-                                                                            );
-                                                                        })}
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
+                                                                                {displayChildIds.map((cid: string) => {
+                                                                                    const val = isNewFormat ? ind.evaluationsByChild?.[cid] : ind.finalAchievement;
+                                                                                    const isHighlighted = child?.id === cid;
+                                                                                    return (
+                                                                                        <td key={cid} className={`p-2 border-b border-r text-center ${isHighlighted ? 'bg-sky-50/30 border-sky-50' : 'bg-white border-rose-50'
+                                                                                            }`}>
+                                                                                            <span className={`inline-block w-9 h-9 border-2 leading-8 rounded-xl text-[10px] font-black transition-all ${val === 'L' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm' :
+                                                                                                    val === 'ML' ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm' :
+                                                                                                        val === 'N/O' ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-sm' :
+                                                                                                            'text-slate-100 border-transparent bg-transparent'
+                                                                                                }`}>
+                                                                                                {val || '-'}
+                                                                                            </span>
+                                                                                        </td>
+                                                                                    );
+                                                                                })}
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </div>
                                             </div>
@@ -416,8 +494,8 @@ const EvaluationTrackingView: React.FC<EvaluationTrackingViewProps> = ({ child, 
                                                                     return (
                                                                         <td key={cid} className="p-1 border border-slate-100 text-center bg-white h-16">
                                                                             <span className={`inline-block w-8 h-8 leading-[32px] rounded-xl text-[10px] font-black ${val === 'L' ? 'bg-[#f0fdf4] text-[#166534]' :
-                                                                                    val === 'ML' ? 'bg-[#fffbeb] text-[#92400e]' :
-                                                                                        val === 'N/O' ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-slate-50 text-slate-200'
+                                                                                val === 'ML' ? 'bg-[#fffbeb] text-[#92400e]' :
+                                                                                    val === 'N/O' ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-slate-50 text-slate-200'
                                                                                 }`}>{val || '-'}</span>
                                                                         </td>
                                                                     );
