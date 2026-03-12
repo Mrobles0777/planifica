@@ -79,18 +79,28 @@ export interface GroundingSource {
 }
 
 export interface GeneratedAssessment {
+  id: string;
   activityName: string;
   description: string;
   indicators: string[];
   materials: string[];
   groundingSources?: GroundingSource[];
-  createdAt: string;
-  level: Level;
-  nucleo: string;
-  objective: string;
+  instructions: string;
+  evaluation: string;
+  level?: Level;
+  nucleo?: string;
+  objective?: string;
   methodology: Methodology;
+  createdAt: string;
   span?: PlanningSpan;
   endDate?: string;
+  experienceSummary?: string;
+  experienceTable?: {
+    day: string;
+    activity: string;
+    objectives: string[];
+    description: string;
+  }[];
 }
 
 export interface ObjectivePlan {
@@ -103,17 +113,24 @@ export interface ObjectivePlan {
 
 export interface Planning {
   titulo?: string;
+  mes?: string;
+  nivel?: string;
+  equipo?: string;
   metodologia?: string;
   materiales?: string[];
-  nivel: string;
-  equipo?: string;
-  mes?: string;
-  ambitoNucleo: string;
+  ambitoNucleo?: string;
   planes: ObjectivePlan[];
   totalPlanes?: number;
   mediacion: string;
   span?: PlanningSpan;
   startDate?: string;
+  experienceSummary?: string;
+  experienceTable?: {
+    day: string;
+    activity: string;
+    objectives: string[];
+    description: string;
+  }[];
 }
 
 

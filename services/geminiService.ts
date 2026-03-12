@@ -6,7 +6,7 @@ import { supabase } from "../supabaseClient";
 const DEFAULT_GEMINI_MODEL = "gemini-3-flash-preview";
 
 // Timeout en el cliente para que el botón nunca se quede bloqueado indefinidamente.
-const CLIENT_TIMEOUT_MS = 55_000;
+const CLIENT_TIMEOUT_MS = 95_000;
 
 // Feriados Chile 2024-2025 (simplificado para prompt)
 const CHILEAN_HOLIDAYS = [
@@ -182,14 +182,23 @@ export async function generateAssessmentDetails(
       description?: string;
       indicators?: string[];
       materials?: string[];
+      instructions?: string;
+      evaluation?: string;
+      experienceSummary?: string;
+      experienceTable?: { day: string; activity: string; objectives: string[]; description: string; }[];
     };
 
     return {
+      id: Math.random().toString(36).substr(2, 9),
       activityName: data.activityName || "Nueva Experiencia",
       description: data.description || "Sin descripción disponible.",
       indicators: data.indicators || [],
       materials: data.materials || [],
-      groundingSources: []
+      instructions: data.instructions || "Sin instrucciones.",
+      evaluation: data.evaluation || "Sin evaluación.",
+      groundingSources: [],
+      experienceSummary: data.experienceSummary,
+      experienceTable: data.experienceTable
     };
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
@@ -261,9 +270,23 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
               required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
             }
           },
-          mediacion: { type: "STRING" }
+          mediacion: { type: "STRING" },
+          experienceSummary: { type: "STRING" },
+          experienceTable: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                day: { type: "STRING" },
+                activity: { type: "STRING" },
+                objectives: { type: "ARRAY", items: { type: "STRING" } },
+                description: { type: "STRING" }
+              },
+              required: ["day", "activity", "objectives", "description"]
+            }
+          }
         },
-        required: ["nivel", "ambitoNucleo", "planes", "mediacion"]
+        required: ["nivel", "ambitoNucleo", "planes", "mediacion", "experienceSummary", "experienceTable"]
       }
     }
   });
@@ -374,9 +397,23 @@ export async function generateGlobalPlanning(sourceItems: unknown[]): Promise<Pl
               required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
             }
           },
-          mediacion: { type: "STRING" }
+          mediacion: { type: "STRING" },
+          experienceSummary: { type: "STRING" },
+          experienceTable: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                day: { type: "STRING" },
+                activity: { type: "STRING" },
+                objectives: { type: "ARRAY", items: { type: "STRING" } },
+                description: { type: "STRING" }
+              },
+              required: ["day", "activity", "objectives", "description"]
+            }
+          }
         },
-        required: ["nivel", "ambitoNucleo", "planes", "mediacion"]
+        required: ["nivel", "ambitoNucleo", "planes", "mediacion", "experienceSummary", "experienceTable"]
       }
     }
   });

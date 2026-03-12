@@ -102,7 +102,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                         </div>
 
                         {activePlanning.materiales && activePlanning.materiales.length > 0 && (
-                            <div className="mb-16 p-10 bg-slate-50 border-2 border-slate-200 rounded-[3rem] space-y-6">
+                            <div className="mb-10 p-10 bg-slate-50 border-2 border-slate-200 rounded-[3rem] space-y-6">
                                 <h4 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3">
                                     <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
                                     Caja de Materiales
@@ -113,6 +113,61 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                                             {m}
                                         </span>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activePlanning.experienceSummary && (
+                            <div className="mb-10 p-10 bg-sky-50/50 border-2 border-sky-100 rounded-[3rem] space-y-6">
+                                <h4 className="text-[12px] font-black text-sky-500 uppercase tracking-[0.3em] flex items-center gap-3">
+                                    <div className="w-2 h-2 bg-sky-400 rounded-full"></div>
+                                    RESUMEN ETAPAS DE LA EXPERIENCIA:
+                                </h4>
+                                <div className="text-[13px] text-slate-700 leading-relaxed font-medium whitespace-pre-line prose prose-slate max-w-none">
+                                    {activePlanning.experienceSummary}
+                                </div>
+                            </div>
+                        )}
+
+                        {activePlanning.experienceTable && activePlanning.experienceTable.length > 0 && (
+                            <div className="mb-16 space-y-6">
+                                <h4 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3 pl-4">
+                                    <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                                    EXPERIENCIA Y RECURSOS
+                                </h4>
+                                <div className="overflow-hidden border-2 border-slate-100 rounded-[3rem] bg-white shadow-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                                        {activePlanning.experienceTable.map((row, i) => (
+                                            <div key={i} className="flex flex-col">
+                                                <div className="bg-slate-50 p-4 border-b border-slate-100 text-center">
+                                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{row.day}</span>
+                                                </div>
+                                                <div className="p-6 space-y-4 flex-1">
+                                                    <div>
+                                                        <div className="text-sm font-black text-slate-800 border-b-2 border-slate-800 pb-1 mb-2 inline-block">
+                                                            {row.activity}
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <div className="text-[10px] space-y-1">
+                                                            <span className="font-black text-slate-400 uppercase block">Objetivos:</span>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {row.objectives.map((obj, idx) => (
+                                                                    <span key={idx} className="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                                                                        {obj}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-600 leading-relaxed">
+                                                            <span className="font-black text-slate-400 uppercase block mb-1">Actividad:</span>
+                                                            {row.description}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         )}
