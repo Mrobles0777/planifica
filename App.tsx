@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Loader2, Star, Target, Calendar, User as UserIcon } from 'lucide-react';
-import { Level, ChildLevel, GeneratedAssessment, Nucleo, Objective, Methodology, Planning, User, Child } from './types';
+import { Level, ChildLevel, GeneratedAssessment, Nucleo, Objective, Methodology, Planning, PlanningSpan, User, Child } from './types';
 import { CURRICULUM_DATA } from './constants';
 import { generateAssessmentDetails, generateVariablePlanning, generateGlobalPlanning } from './services/geminiService';
 import { supabase, testSupabaseConnection } from './supabaseClient';
@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [selectedObjectives, setSelectedObjectives] = useState<Objective[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectedMethodology, setSelectedMethodology] = useState<Methodology | null>(null);
+  const [selectedSpan, setSelectedSpan] = useState<PlanningSpan>(PlanningSpan.DAILY);
   const [expandedAmbito, setExpandedAmbito] = useState<string | null>(null);
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -401,7 +402,7 @@ const App: React.FC = () => {
         methodology: selectedMethodology
       });
 
-      const data = await generateAssessmentDetails(selectedLevel, selectedNucleo.name, selectedObjectives.map(o => o.text).join(" | "), selectedMethodology);
+      const data = await generateAssessmentDetails(selectedLevel, selectedNucleo.name, selectedObjectives.map(o => o.text).join(" | "), selectedMethodology, selectedSpan);
 
       if (!data) throw new Error("La IA no devolvió datos válidos.");
 
@@ -411,6 +412,7 @@ const App: React.FC = () => {
         nucleo: selectedNucleo.name,
         objective: selectedObjectives.map(o => o.text).join(" | "),
         methodology: selectedMethodology,
+        span: selectedSpan,
         createdAt: new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-CL')
       });
     } catch (err: any) {
@@ -714,6 +716,8 @@ const App: React.FC = () => {
             setView={handleViewChange}
             openMaterialSearch={openMaterialSearch}
             children={children}
+            selectedSpan={selectedSpan}
+            setSelectedSpan={setSelectedSpan}
           />
         )}
 

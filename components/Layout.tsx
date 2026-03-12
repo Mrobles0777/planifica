@@ -8,6 +8,7 @@ interface LayoutProps {
   handleLogout: () => void;
   errorMessage?: string | null;
   setErrorMessage?: (msg: string | null) => void;
+  setView: (view: string) => void;
   children: React.ReactNode;
 }
 

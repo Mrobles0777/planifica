@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowLeft, ChevronRight, ChevronDown, CalendarDays, Star, Zap, Palette, CheckCircle2, Loader2, Sparkles, X, Search, Baby } from 'lucide-react';
-import { Level, Nucleo, Objective, Methodology, GeneratedAssessment, Child } from '../types';
+import { Level, Nucleo, Objective, Methodology, GeneratedAssessment, Child, PlanningSpan } from '../types';
 
 interface CreateViewProps {
     currentAssessment: GeneratedAssessment | null;
@@ -25,6 +25,8 @@ interface CreateViewProps {
     setView: (view: any) => void;
     openMaterialSearch: (material: string) => void;
     children: Child[];
+    selectedSpan: PlanningSpan;
+    setSelectedSpan: (span: PlanningSpan) => void;
 }
 
 const EVAL_MODES = [
@@ -55,7 +57,9 @@ const CreateView: React.FC<CreateViewProps> = ({
     isGeneratingPlanning,
     setView,
     openMaterialSearch,
-    children
+    children,
+    selectedSpan,
+    setSelectedSpan
 }) => {
     const toggleObjective = (obj: Objective) => {
         if (selectedObjectives.find(o => o.id === obj.id)) {
@@ -200,18 +204,44 @@ const CreateView: React.FC<CreateViewProps> = ({
                 </div>
             )}
 
-            {/* Step 4: Date */}
+            {/* Step 4: Temporalidad */}
             {selectedObjectives.length > 0 && (
-                <div className="space-y-4 animate-in fade-in">
-                    <label className="text-[11px] font-black text-amber-500 uppercase block ml-4 tracking-widest">4. Fecha Estimada</label>
-                    <div className="relative">
+                <div className="space-y-6 animate-in fade-in">
+                    <label className="text-[11px] font-black text-amber-500 uppercase block ml-4 tracking-widest">4. Temporalidad</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {Object.values(PlanningSpan).map((span) => (
+                            <button
+                                key={span}
+                                onClick={() => setSelectedSpan(span)}
+                                className={`p-6 rounded-[2rem] border-2 transition-all text-left ${selectedSpan === span ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-md' : 'border-slate-100 bg-white hover:border-amber-100'}`}
+                            >
+                                <span className="text-sm font-black">{span}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="relative mt-4">
                         <CalendarDays className="absolute left-6 top-1/2 -translate-y-1/2 text-amber-400 w-6 h-6" />
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-6 pl-16 pr-8 text-base font-bold text-slate-700 outline-none focus:border-amber-300 transition-all shadow-sm"
-                        />
+                        {selectedSpan === PlanningSpan.MONTHLY ? (
+                            <input
+                                type="month"
+                                value={selectedDate.substring(0, 7)}
+                                onChange={(e) => setSelectedDate(e.target.value + "-01")}
+                                className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-6 pl-16 pr-8 text-base font-bold text-slate-700 outline-none focus:border-amber-300 transition-all shadow-sm"
+                            />
+                        ) : (
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-6 pl-16 pr-8 text-base font-bold text-slate-700 outline-none focus:border-amber-300 transition-all shadow-sm"
+                            />
+                        )}
+                        <p className="mt-3 ml-6 text-[11px] font-bold text-slate-400 italic">
+                            {selectedSpan === PlanningSpan.WEEKLY ? "Se considerará la semana laboral (Lunes a Viernes) de la fecha elegida." : 
+                             selectedSpan === PlanningSpan.MONTHLY ? "Se generará un plan para los días hábiles del mes seleccionado." : 
+                             "Se generará una experiencia para el día seleccionado."}
+                        </p>
                     </div>
                 </div>
             )}
@@ -247,7 +277,9 @@ const CreateView: React.FC<CreateViewProps> = ({
                     className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-black py-8 rounded-[3rem] shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 text-xl transition-all active:scale-95 hover:shadow-sky-200/50 mt-10"
                 >
                     {isGenerating ? <Loader2 className="animate-spin w-8 h-8" /> : <Sparkles className="w-8 h-8" />}
-                    ¡Crear Aventura!
+                    {selectedSpan === PlanningSpan.WEEKLY ? '¡Generar Plan Semanal!' : 
+                     selectedSpan === PlanningSpan.MONTHLY ? '¡Generar Plan Mensual!' : 
+                     '¡Crear Aventura Diaria!'}
                 </button>
             )}
         </div>

@@ -5,6 +5,12 @@ export enum Level {
   TRANSICION = 'Tercer Nivel (Transición)'
 }
 
+export enum PlanningSpan {
+  DAILY = 'Día Único',
+  WEEKLY = 'Plan Semanal',
+  MONTHLY = 'Plan Mensual'
+}
+
 /** Subniveles administrativos para el perfil de cada niño/a. */
 export enum ChildLevel {
   SC_MENOR = 'Sala Cuna Menor',
@@ -83,6 +89,8 @@ export interface GeneratedAssessment {
   nucleo: string;
   objective: string;
   methodology: Methodology;
+  span?: PlanningSpan;
+  endDate?: string;
 }
 
 export interface ObjectivePlan {
@@ -104,6 +112,8 @@ export interface Planning {
   planes: ObjectivePlan[];
   totalPlanes?: number;
   mediacion: string;
+  span?: PlanningSpan;
+  startDate?: string;
 }
 
 
