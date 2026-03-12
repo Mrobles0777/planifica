@@ -98,13 +98,19 @@ export interface GeneratedAssessment {
   experienceTable?: {
     day: string;
     activity: string;
-    objectives: string[];
+    objectives: {
+      text: string;
+      ambito: string;
+      nucleo: string;
+    }[];
     description: string;
   }[];
 }
 
 export interface ObjectivePlan {
   objective: string;
+  ambito?: string;
+  nucleo?: string;
   focoObservacion: string[];
   inicio: string;
   desarrollo: string;
@@ -128,7 +134,11 @@ export interface Planning {
   experienceTable?: {
     day: string;
     activity: string;
-    objectives: string[];
+    objectives: {
+      text: string;
+      ambito: string;
+      nucleo: string;
+    }[];
     description: string;
   }[];
 }

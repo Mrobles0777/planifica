@@ -906,11 +906,17 @@ const App: React.FC = () => {
                           <div className="space-y-2">
                             <div className="text-[8px] space-y-0.5">
                               <span className="font-black text-slate-400 uppercase block">Objetivos:</span>
-                              <div className="flex flex-wrap gap-0.5">
+                              <div className="flex flex-col gap-1">
                                 {row.objectives.map((obj, idx) => (
-                                  <span key={idx} className="text-[8px] font-bold text-sky-600 bg-sky-50 px-1 rounded border border-sky-100">
-                                    {obj}
-                                  </span>
+                                  <div key={idx} className="bg-sky-50 p-1 rounded-md border border-sky-100">
+                                    <div className="flex gap-0.5 mb-0.5">
+                                      <span className="text-[6px] font-black text-sky-500 uppercase px-1 py-0.25 bg-white rounded border border-sky-100">{obj.ambito}</span>
+                                      <span className="text-[6px] font-black text-emerald-500 uppercase px-1 py-0.25 bg-white rounded border border-emerald-100">{obj.nucleo}</span>
+                                    </div>
+                                    <span className="text-[7px] font-bold text-slate-700 leading-tight block">
+                                      {obj.text}
+                                    </span>
+                                  </div>
                                 ))}
                               </div>
                             </div>
@@ -935,7 +941,15 @@ const App: React.FC = () => {
                 >
                   <div className="flex gap-5 mb-6">
                     <div className="bg-yellow-400 w-2 rounded-full shrink-0"></div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex flex-wrap gap-1.5 mb-1.5">
+                        {plan.ambito && (
+                          <span className="text-[7px] font-black text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100 uppercase tracking-widest">{plan.ambito}</span>
+                        )}
+                        {plan.nucleo && (
+                          <span className="text-[7px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 uppercase tracking-widest">{plan.nucleo}</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 text-amber-600 font-bold text-[10px] uppercase tracking-[0.25em]">Objetivo OA</div>
                       <p className="text-slate-900 text-sm font-bold">{plan.objective}</p>
                     </div>

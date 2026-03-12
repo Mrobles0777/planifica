@@ -141,12 +141,19 @@ export async function generateAssessmentDetails(
     ${methodologyPrompt}
 
     La respuesta DEBE ser un JSON con esta estructura exacta:
-    {
       "activityName": "Nombre de la experiencia",
       "description": "Descripción lúdica y técnica",
       "indicators": ["indicador 1", "indicador 2", "indicador 3"],
-      "materials": ["material 1", "material 2"]
+      "materials": ["material 1", "material 2"],
+      "experienceSummary": "RESUMEN ETAPAS: INICIO: ..., DESARROLLO: ..., FINALIZACION: ..."
     }
+
+    RESUMEN DE ETAPAS (experienceSummary):
+    - Genera un resumen narrativo de alto nivel que sintetice TODOS los objetivos propuestos.
+    - El formato DEBE ser estrictamente:
+      INICIO: [Descripción]
+      DESARROLLO: [Descripción]
+      FINALIZACION: [Descripción]
   `;
 
   const invokePromise = supabase.functions.invoke('generate-content', {
@@ -160,9 +167,10 @@ export async function generateAssessmentDetails(
           activityName: { type: "STRING" },
           description: { type: "STRING" },
           indicators: { type: "ARRAY", items: { type: "STRING" } },
-          materials: { type: "ARRAY", items: { type: "STRING" } }
+          materials: { type: "ARRAY", items: { type: "STRING" } },
+          experienceSummary: { type: "STRING" }
         },
-        required: ["activityName", "description", "indicators", "materials"]
+        required: ["activityName", "description", "indicators", "materials", "experienceSummary"]
       }
     }
   });
@@ -185,7 +193,12 @@ export async function generateAssessmentDetails(
       instructions?: string;
       evaluation?: string;
       experienceSummary?: string;
-      experienceTable?: { day: string; activity: string; objectives: string[]; description: string; }[];
+      experienceTable?: { 
+        day: string; 
+        activity: string; 
+        objectives: { text: string; ambito: string; nucleo: string; }[]; 
+        description: string; 
+      }[];
     };
 
     return {
@@ -239,6 +252,14 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
     - Genera en el array "planes" una entrada por cada día o semana según corresponda.
     - Para SEMANAL o MENSUAL, cada objeto en "planes" debe representar un día o una semana de actividades.
     - Mantén el rigor técnico de Inicio, Desarrollo, Cierre y Foco de Observación.
+    - **PARA CADA OBJETIVO**: Indica explícitamente el Ámbito y el Núcleo de las BCEP al que pertenece.
+
+    RESUMEN DE ETAPAS (experienceSummary):
+    - Genera un resumen narrativo de alto nivel que sintetice TODOS los objetivos y planes propuestos.
+    - El formato DEBE ser estrictamente:
+      INICIO: [Descripción de cómo empieza el período/secuencia]
+      DESARROLLO: [Descripción de las actividades centrales y progresión]
+      FINALIZACION: [Descripción de cómo concluye y se evalúa el proceso pedagógico]
   `;
 
   const invokePromise = supabase.functions.invoke('generate-content', {
@@ -261,13 +282,13 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
             items: {
               type: "OBJECT",
               properties: {
-                objective: { type: "STRING" },
+                objective: { type: "STRING" }, ambito: { type: "STRING" }, nucleo: { type: "STRING" },
                 focoObservacion: { type: "ARRAY", items: { type: "STRING" } },
                 inicio: { type: "STRING" },
                 desarrollo: { type: "STRING" },
                 cierre: { type: "STRING" }
               },
-              required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
+              required: ["objective", "ambito", "nucleo", "focoObservacion", "inicio", "desarrollo", "cierre"]
             }
           },
           mediacion: { type: "STRING" },
@@ -279,7 +300,18 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
               properties: {
                 day: { type: "STRING" },
                 activity: { type: "STRING" },
-                objectives: { type: "ARRAY", items: { type: "STRING" } },
+                objectives: {
+                  type: "ARRAY",
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      text: { type: "STRING" },
+                      ambito: { type: "STRING" },
+                      nucleo: { type: "STRING" }
+                    },
+                    required: ["text", "ambito", "nucleo"]
+                  }
+                },
                 description: { type: "STRING" }
               },
               required: ["day", "activity", "objectives", "description"]
@@ -345,6 +377,10 @@ export async function generateGlobalPlanning(sourceItems: unknown[]): Promise<Pl
     6. Genera un "titulo" integrador para todo el plan.
     7. Genera un array consolidado de "materiales" (sin duplicados) necesarios para todas las actividades del plan.
     8. El campo "metodologia" debe ser "Planificación Integrada".
+    9. El campo "experienceSummary" debe ser un resumen narrativo consolidado de TODOS los objetivos de aprendizaje integrados, siguiendo este esquema:
+       INICIO: [Resumen de la etapa inicial de la secuencia integrada]
+       DESARROLLO: [Resumen de la progresión y ejecución central]
+       FINALIZACION: [Resumen del cierre y consolidación de aprendizajes]
 
     ESTRUCTURA DE SALIDA (JSON):
     {
@@ -356,6 +392,8 @@ export async function generateGlobalPlanning(sourceItems: unknown[]): Promise<Pl
       "planes": [
         {
           "objective": "OA Original",
+          "ambito": "Ámbito BCEP",
+          "nucleo": "Núcleo BCEP",
           "focoObservacion": ["Indicador 1", "Indicador 2"],
           "inicio": "Descripción detallada del inicio",
           "desarrollo": "Descripción detallada del desarrollo",
@@ -388,13 +426,13 @@ export async function generateGlobalPlanning(sourceItems: unknown[]): Promise<Pl
             items: {
               type: "OBJECT",
               properties: {
-                objective: { type: "STRING" },
+                objective: { type: "STRING" }, ambito: { type: "STRING" }, nucleo: { type: "STRING" },
                 focoObservacion: { type: "ARRAY", items: { type: "STRING" } },
                 inicio: { type: "STRING" },
                 desarrollo: { type: "STRING" },
                 cierre: { type: "STRING" }
               },
-              required: ["objective", "focoObservacion", "inicio", "desarrollo", "cierre"]
+              required: ["objective", "ambito", "nucleo", "focoObservacion", "inicio", "desarrollo", "cierre"]
             }
           },
           mediacion: { type: "STRING" },
@@ -406,7 +444,18 @@ export async function generateGlobalPlanning(sourceItems: unknown[]): Promise<Pl
               properties: {
                 day: { type: "STRING" },
                 activity: { type: "STRING" },
-                objectives: { type: "ARRAY", items: { type: "STRING" } },
+                objectives: {
+                  type: "ARRAY",
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      text: { type: "STRING" },
+                      ambito: { type: "STRING" },
+                      nucleo: { type: "STRING" }
+                    },
+                    required: ["text", "ambito", "nucleo"]
+                  }
+                },
                 description: { type: "STRING" }
               },
               required: ["day", "activity", "objectives", "description"]

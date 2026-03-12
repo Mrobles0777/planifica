@@ -151,11 +151,17 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                                                     <div className="space-y-3">
                                                         <div className="text-[10px] space-y-1">
                                                             <span className="font-black text-slate-400 uppercase block">Objetivos:</span>
-                                                            <div className="flex flex-wrap gap-1">
+                                                            <div className="flex flex-col gap-2">
                                                                 {row.objectives.map((obj, idx) => (
-                                                                    <span key={idx} className="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
-                                                                        {obj}
-                                                                    </span>
+                                                                    <div key={idx} className="bg-sky-50 p-2 rounded-xl border border-sky-100">
+                                                                        <div className="flex gap-1 mb-1">
+                                                                            <span className="text-[8px] font-black text-sky-500 uppercase px-1.5 py-0.5 bg-white rounded-md border border-sky-100">{obj.ambito}</span>
+                                                                            <span className="text-[8px] font-black text-emerald-500 uppercase px-1.5 py-0.5 bg-white rounded-md border border-emerald-100">{obj.nucleo}</span>
+                                                                        </div>
+                                                                        <span className="text-[9px] font-bold text-slate-700 leading-tight block">
+                                                                            {obj.text}
+                                                                        </span>
+                                                                    </div>
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -177,7 +183,15 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                                 <div key={idx} className="p-10 bg-white border-2 border-slate-100 rounded-[3rem] shadow-sm space-y-8">
                                     <div className="flex gap-6">
                                         <div className="bg-yellow-400 w-3 rounded-full shrink-0"></div>
-                                        <div className="space-y-3">
+                                        <div className="space-y-3 flex-1">
+                                            <div className="flex flex-wrap gap-2 mb-2">
+                                                {plan.ambito && (
+                                                    <span className="text-[9px] font-black text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-100 uppercase tracking-widest">{plan.ambito}</span>
+                                                )}
+                                                {plan.nucleo && (
+                                                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 uppercase tracking-widest">{plan.nucleo}</span>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-3 text-amber-600 font-black text-[11px] uppercase tracking-[0.3em]">Objetivo OA</div>
                                             <p className="text-slate-900 text-lg font-bold leading-relaxed">{plan.objective}</p>
                                         </div>
