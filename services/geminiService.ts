@@ -129,6 +129,7 @@ export async function generateAssessmentDetails(
     IMPORTANTE PARA PLANES EXTENDIDOS (${span}):
     - Si el Núcleo u Objetivo es "Aleatorio", tú como experto DEBES seleccionar los Núcleos y OAs más pertinentes de las BCEP para el nivel ${level}.
     - Asegura una progresión pedagógica lógica para el período solicitado.
+    - Puedes incluir uno o hasta DOS objetivos de aprendizaje por experiencia si la complejidad lo amerita.
     
     INSTRUCCIONES DE ALCANCE:
     - Si es ${PlanningSpan.DAILY}: Una experiencia única potente.
@@ -223,6 +224,7 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
 
     INSTRUCCIÓN DE AUTONOMÍA:
     - Si el Núcleo u Objetivo indica "Varios" o "Autónomo", DEBES proponer e integrar en la planificación los OAs específicos de las BCEP que mejor se adapten a la experiencia y al nivel ${assessment.level}.
+    - Considera proponer hasta dos objetivos por jornada para una planificación más robusta.
 
     IMPORTANTE: 
     - Genera en el array "planes" una entrada por cada día o semana según corresponda.

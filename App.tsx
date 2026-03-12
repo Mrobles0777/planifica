@@ -400,8 +400,8 @@ const App: React.FC = () => {
     try {
       console.log("Iniciando generación con:", {
         level: selectedLevel,
-        nucleo: selectedNucleo.name,
-        objectives: selectedObjectives.map(o => o.text).join(" | "),
+        nucleo: selectedNucleo?.name || "Autónomo",
+        objectives: selectedObjectives.map(o => o.text).join(" | ") || "Autónomo",
         methodology: selectedMethodology
       });
 
