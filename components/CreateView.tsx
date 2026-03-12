@@ -61,6 +61,15 @@ const CreateView: React.FC<CreateViewProps> = ({
     selectedSpan,
     setSelectedSpan
 }) => {
+    // Reset form when changing span
+    const changeSpan = (span: PlanningSpan) => {
+        setSelectedSpan(span);
+        setSelectedLevel(null);
+        setSelectedNucleo(null);
+        setSelectedObjectives([]);
+        setSelectedMethodology(null);
+    };
+
     const toggleObjective = (obj: Objective) => {
         if (selectedObjectives.find(o => o.id === obj.id)) {
             setSelectedObjectives(selectedObjectives.filter(o => o.id !== obj.id));
@@ -126,7 +135,7 @@ const CreateView: React.FC<CreateViewProps> = ({
     }
 
     return (
-        <div className="space-y-10 animate-in slide-in-from-bottom-4 pb-20 max-w-2xl mx-auto">
+        <div className="space-y-10 animate-in fade-in duration-500 pb-20">
             <div className="flex items-center gap-3">
                 <button onClick={() => setView('home')} className="p-3 bg-white shadow-sm rounded-full transition-all hover:bg-slate-50">
                     <ArrowLeft className="w-6 h-6 text-slate-500" />
@@ -134,26 +143,109 @@ const CreateView: React.FC<CreateViewProps> = ({
                 <h3 className="text-3xl font-black text-slate-800 tracking-tighter">Diseñar Aventura</h3>
             </div>
 
-            {/* Step 1: Level */}
-            <div className="space-y-4">
-                <label className="text-[11px] font-black text-sky-500 uppercase block ml-4 tracking-widest">1. Seleccionar Nivel</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {Object.values(Level).map((lvl) => (
-                        <button
-                            key={lvl}
-                            onClick={() => { setSelectedLevel(lvl); setSelectedNucleo(null); setSelectedObjectives([]); }}
-                            className={`text-left p-6 rounded-[2rem] border-2 transition-all ${selectedLevel === lvl ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-lg' : 'border-slate-100 bg-white hover:border-sky-100'}`}
-                        >
-                            <span className="text-base font-black">{lvl}</span>
-                        </button>
-                    ))}
-                </div>
+            {/* Step 0: Selector de Modo / Tipo de Plan */}
+            <div className="bg-white/50 backdrop-blur-sm p-2 rounded-[2.5rem] border-2 border-slate-100 flex gap-2">
+                {Object.values(PlanningSpan).map((span) => (
+                    <button
+                        key={span}
+                        onClick={() => changeSpan(span)}
+                        className={`flex-1 py-4 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all ${selectedSpan === span ? 'bg-amber-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                    >
+                        {span}
+                    </button>
+                ))}
             </div>
 
-            {/* Step 2: Nucleo */}
+            {/* Renderización Condicional de Flujos */}
+            {selectedSpan === PlanningSpan.DAILY ? (
+                /* FLUJO DIARIO (ORIGINAL) */
+                <>
+                    {/* Step 1: Nivel */}
+                    <div className="space-y-4">
+                        <label className="text-[11px] font-black text-sky-500 uppercase block ml-4 tracking-widest">1. Selecciona el Nivel</label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {Object.values(Level).map((level) => (
+                                <button
+                                    key={level}
+                                    onClick={() => setSelectedLevel(level)}
+                                    className={`p-6 rounded-[2rem] border-2 transition-all text-left group ${selectedLevel === level ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-md' : 'border-slate-100 bg-white hover:border-sky-100'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl transition-colors ${selectedLevel === level ? 'bg-white text-sky-500' : 'bg-sky-50 text-sky-400 group-hover:bg-sky-100'}`}>
+                                            <Baby className="w-5 h-5" />
+                                        </div>
+                                        <span className="text-sm font-black">{level}</span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </>
+            ) : (
+                /* FLUJO SEMANAL / MENSUAL (REORDENADO) */
+                <>
+                    {/* Step 1: Temporalidad (Fecha/Mes) */}
+                    <div className="space-y-4 animate-in fade-in">
+                        <label className="text-[11px] font-black text-amber-500 uppercase block ml-4 tracking-widest">
+                            1. {selectedSpan === PlanningSpan.WEEKLY ? 'Selecciona la Semana' : 'Selecciona el Mes'}
+                        </label>
+                        <div className="relative">
+                            <CalendarDays className="absolute left-6 top-1/2 -translate-y-1/2 text-amber-400 w-6 h-6" />
+                            {selectedSpan === PlanningSpan.MONTHLY ? (
+                                <input
+                                    type="month"
+                                    value={selectedDate.substring(0, 7)}
+                                    onChange={(e) => setSelectedDate(e.target.value + "-01")}
+                                    className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-6 pl-16 pr-8 text-base font-bold text-slate-700 outline-none focus:border-amber-300 transition-all shadow-sm"
+                                />
+                            ) : (
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-6 pl-16 pr-8 text-base font-bold text-slate-700 outline-none focus:border-amber-300 transition-all shadow-sm"
+                                />
+                            )}
+                        </div>
+                        <p className="mt-3 ml-6 text-[11px] font-bold text-slate-400 italic">
+                            {selectedSpan === PlanningSpan.WEEKLY ? "Se considerará la semana laboral (Lunes a Viernes) de la fecha elegida." :
+                             "Se generará un plan para los días hábiles del mes seleccionado (excluyendo feriados)."}
+                        </p>
+                    </div>
+
+                    {/* Step 2: Nivel (Mostrado después de la fecha) */}
+                    {(selectedDate) && (
+                        <div className="space-y-4 animate-in slide-in-from-top-4">
+                            <label className="text-[11px] font-black text-sky-500 uppercase block ml-4 tracking-widest">2. Selecciona el Nivel</label>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                {Object.values(Level).map((level) => (
+                                    <button
+                                        key={level}
+                                        onClick={() => setSelectedLevel(level)}
+                                        className={`p-6 rounded-[2rem] border-2 transition-all text-left group ${selectedLevel === level ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-md' : 'border-slate-100 bg-white hover:border-sky-100'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-xl transition-colors ${selectedLevel === level ? 'bg-white text-sky-500' : 'bg-sky-50 text-sky-400 group-hover:bg-sky-100'}`}>
+                                                <Baby className="w-5 h-5" />
+                                            </div>
+                                            <span className="text-sm font-black">{level}</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {/* PASOS COMUNES (Dinámicos según el flujo) */}
+            
+            {/* Step: Núcleo (Paso 2 en Diario, Paso 3 en Extendido) */}
             {selectedLevel && (
-                <div className="space-y-4 animate-in fade-in">
-                    <label className="text-[11px] font-black text-rose-500 uppercase block ml-4 tracking-widest">2. Ámbito y Núcleo</label>
+                <div className="space-y-4 animate-in slide-in-from-top-4">
+                    <label className="text-[11px] font-black text-rose-500 uppercase block ml-4 tracking-widest">
+                        {selectedSpan === PlanningSpan.DAILY ? '2. Ámbito y Núcleo' : '3. Ámbito y Núcleo'}
+                    </label>
                     <div className="space-y-3">
                         {Object.keys(groupedData).map((ambito) => (
                             <div key={ambito} className="bg-white rounded-[2rem] border-2 border-slate-100 overflow-hidden shadow-sm">
@@ -204,44 +296,18 @@ const CreateView: React.FC<CreateViewProps> = ({
                 </div>
             )}
 
-            {/* Step 4: Temporalidad */}
-            {selectedObjectives.length > 0 && (
-                <div className="space-y-6 animate-in fade-in">
-                    <label className="text-[11px] font-black text-amber-500 uppercase block ml-4 tracking-widest">4. Temporalidad</label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {Object.values(PlanningSpan).map((span) => (
-                            <button
-                                key={span}
-                                onClick={() => setSelectedSpan(span)}
-                                className={`p-6 rounded-[2rem] border-2 transition-all text-left ${selectedSpan === span ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-md' : 'border-slate-100 bg-white hover:border-amber-100'}`}
-                            >
-                                <span className="text-sm font-black">{span}</span>
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="relative mt-4">
+            {/* Step Adicional Diario: Fecha (Paso 4 solo en Diario) */}
+            {selectedSpan === PlanningSpan.DAILY && selectedObjectives.length > 0 && (
+                <div className="space-y-4 animate-in fade-in">
+                    <label className="text-[11px] font-black text-amber-500 uppercase block ml-4 tracking-widest">4. Fecha Estimada</label>
+                    <div className="relative">
                         <CalendarDays className="absolute left-6 top-1/2 -translate-y-1/2 text-amber-400 w-6 h-6" />
-                        {selectedSpan === PlanningSpan.MONTHLY ? (
-                            <input
-                                type="month"
-                                value={selectedDate.substring(0, 7)}
-                                onChange={(e) => setSelectedDate(e.target.value + "-01")}
-                                className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-6 pl-16 pr-8 text-base font-bold text-slate-700 outline-none focus:border-amber-300 transition-all shadow-sm"
-                            />
-                        ) : (
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-6 pl-16 pr-8 text-base font-bold text-slate-700 outline-none focus:border-amber-300 transition-all shadow-sm"
-                            />
-                        )}
-                        <p className="mt-3 ml-6 text-[11px] font-bold text-slate-400 italic">
-                            {selectedSpan === PlanningSpan.WEEKLY ? "Se considerará la semana laboral (Lunes a Viernes) de la fecha elegida." : 
-                             selectedSpan === PlanningSpan.MONTHLY ? "Se generará un plan para los días hábiles del mes seleccionado." : 
-                             "Se generará una experiencia para el día seleccionado."}
-                        </p>
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="w-full bg-white border-2 border-slate-100 rounded-[2rem] py-6 pl-16 pr-8 text-base font-bold text-slate-700 outline-none focus:border-amber-300 transition-all shadow-sm"
+                        />
                     </div>
                 </div>
             )}
