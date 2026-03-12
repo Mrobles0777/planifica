@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { ArrowLeft, Save, Loader2, Download, Star, Target, Calendar } from 'lucide-react';
 import { Planning } from '../types';
 
@@ -19,6 +19,39 @@ const PlanningView: React.FC<PlanningViewProps> = ({
     isSaving,
     isExporting
 }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const [scale, setScale] = useState(1);
+    const [containerHeight, setContainerHeight] = useState<string | number>('auto');
+
+    useEffect(() => {
+        const updateScale = () => {
+            if (containerRef.current && contentRef.current) {
+                const containerWidth = containerRef.current.offsetWidth;
+                const baseWidth = 850; // Ancho de referencia para diseño "desktop"
+                
+                if (containerWidth < baseWidth) {
+                    const newScale = containerWidth / baseWidth;
+                    setScale(newScale);
+                    // Ajustamos la altura del contenedor para compensar el escalado
+                    setContainerHeight(contentRef.current.offsetHeight * newScale);
+                } else {
+                    setScale(1);
+                    setContainerHeight('auto');
+                }
+            }
+        };
+
+        const observer = new ResizeObserver(updateScale);
+        if (containerRef.current) observer.observe(containerRef.current);
+        if (contentRef.current) observer.observe(contentRef.current);
+
+        // Pequeño delay para asegurar que el DOM inicial esté listo
+        setTimeout(updateScale, 100);
+
+        return () => observer.disconnect();
+    }, [activePlanning]);
+
     if (!activePlanning) return null;
 
     return (
@@ -50,10 +83,25 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                 </div>
             </div>
 
-            <div className="pdf-preview-container bg-white rounded-[3rem] shadow-2xl border-4 border-slate-50 overflow-hidden">
-                {/* Internal container that matches A4 ratio but is responsive */}
-                <div className="p-8 md:p-16 bg-white overflow-x-auto">
-                    <div className="min-w-[700px]">
+            <div 
+                ref={containerRef} 
+                className="pdf-preview-container bg-white rounded-[3rem] shadow-2xl border-4 border-slate-50 overflow-hidden relative"
+                style={{ height: containerHeight }}
+            >
+                {/* Contenedor escalable */}
+                <div 
+                    ref={contentRef}
+                    style={{
+                        transformOrigin: 'top center',
+                        width: scale < 1 ? '850px' : '100%',
+                        position: 'absolute',
+                        left: '50%',
+                        transform: `translateX(-50%) scale(${scale})`,
+                        transition: 'transform 0.1s ease-out'
+                    }}
+                >
+                    <div className="p-8 md:p-16 bg-white">
+                        <div className="max-w-[850px] mx-auto">
                         <div className="flex items-center justify-between w-full border-b-8 border-sky-400 pb-12 mb-12">
                             <div className="flex items-center gap-8">
                                 <div className="p-6 bg-sky-500 rounded-[2rem]">
@@ -221,6 +269,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     );
 };
