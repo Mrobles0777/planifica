@@ -1,0 +1,907 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Loader2, Star, Target, Calendar, User as UserIcon } from 'lucide-react';
+import { Level, ChildLevel, GeneratedAssessment, Nucleo, Objective, Methodology, Planning, User, Child } from './types';
+import { CURRICULUM_DATA } from './constants';
+import { generateAssessmentDetails, generateVariablePlanning, generateGlobalPlanning } from './services/geminiService';
+import { supabase, testSupabaseConnection } from './supabaseClient';
+
+// Components
+import Layout from './components/Layout';
+import LoginView from './components/LoginView';
+import HomeView from './components/HomeView';
+import HistoryView from './components/HistoryView';
+import CreateView from './components/CreateView';
+import PlanningView from './components/PlanningView';
+import PasswordResetView from './components/PasswordResetView';
+import ProfileView from './components/ProfileView';
+import EvaluationsView from './components/EvaluationsView';
+import ChildrenListView from './components/ChildrenListView';
+
+const App: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<any>(null);
+  const [view, setView] = useState<'home' | 'create' | 'history' | 'planning' | 'global-planning' | 'login' | 'password-reset' | 'profile' | 'evaluations' | 'children-list'>('login');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const [loginForm, setLoginForm] = useState<User>({
+    firstName: '', lastName: '', email: '', location: '', phone: '+56 ', password: ''
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+
+  const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
+  const [selectedNucleo, setSelectedNucleo] = useState<Nucleo | null>(null);
+  const [selectedObjectives, setSelectedObjectives] = useState<Objective[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedMethodology, setSelectedMethodology] = useState<Methodology | null>(null);
+  const [expandedAmbito, setExpandedAmbito] = useState<string | null>(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingPlanning, setIsGeneratingPlanning] = useState(false);
+  const [isGeneratingGlobal, setIsGeneratingGlobal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+  const [currentAssessment, setCurrentAssessment] = useState<GeneratedAssessment | null>(null);
+  const [currentPlanning, setCurrentPlanning] = useState<Planning | null>(null);
+  const [globalPlanningResult, setGlobalPlanningResult] = useState<Planning | null>(null);
+
+  const [savedItems, setSavedItems] = useState<any[]>([]);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [evaluations, setEvaluations] = useState<any[]>([]);
+  const [focusedAssessment, setFocusedAssessment] = useState<GeneratedAssessment | null>(null);
+
+  const fetchSavedItems = useCallback(async (forcedUserId?: string) => {
+    const userId = forcedUserId || session?.user?.id;
+    if (!userId) return;
+
+    setIsSyncing(true);
+    setErrorMessage(null);
+    try {
+      const { data, error } = await supabase
+        .from('saved_plans')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setSavedItems(data || []);
+    } catch (err: any) {
+      console.error("Fetch saved items error:", err);
+      if (err.message?.includes('fetch')) {
+        setErrorMessage("Error de red: Supabase no responde.");
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [session?.user?.id]);
+
+  const fetchChildren = useCallback(async (forcedUserId?: string) => {
+    const userId = forcedUserId || session?.user?.id;
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('children')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      if (data) {
+        setChildren(data.map(item => ({
+          id: item.id,
+          firstName: item.first_name,
+          lastName: item.last_name,
+          birthDate: item.birth_date,
+          level: item.level as ChildLevel,
+          vaccines: item.vaccines,
+          allergies: item.allergies,
+          otherInfo: item.other_info,
+          createdAt: item.created_at
+        })));
+      }
+    } catch (err) {
+      console.error("Fetch children error:", err);
+    }
+  }, [session?.user?.id]);
+
+  const fetchEvaluations = useCallback(async (forcedUserId?: string) => {
+    const userId = forcedUserId || session?.user?.id;
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('evaluations')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setEvaluations(data || []);
+    } catch (err) {
+      console.error("Fetch evaluations error:", err);
+    }
+  }, [session?.user?.id]);
+
+  const fetchUserData = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      if (data) {
+        setUser({
+          firstName: data.first_name,
+          lastName: data.last_name,
+          email: data.email || '',
+          location: data.location,
+          phone: data.phone,
+          avatarUrl: data.avatar_url
+        });
+      } else {
+        setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
+      }
+      // Pasamos el ID directamente para evitar depender de que el estado "session" se haya flusheado
+      fetchSavedItems(userId);
+      fetchChildren(userId);
+      fetchEvaluations(userId);
+    } catch (err: any) {
+      setUser({ firstName: 'Educadora', lastName: '', email: '', location: '', phone: '' });
+      fetchSavedItems(userId);
+      fetchChildren(userId);
+      fetchEvaluations(userId);
+    }
+  }, [fetchSavedItems, fetchChildren, fetchEvaluations]);
+
+  useEffect(() => {
+    // Check session immediately and set up subscription
+    const initAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
+        if (initialSession) {
+          await fetchUserData(initialSession.user.id);
+        }
+      } catch (err) {
+        console.error("Auth init error:", err);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+
+      try {
+        if (event === 'PASSWORD_RECOVERY') {
+          setView('password-reset');
+          return;
+        }
+
+        if (session) {
+          // Cambiamos de vista inmediatamente si estamos en login
+          setView(currentView => {
+            if (currentView === 'login' || currentView === 'password-reset') return 'home';
+            return currentView;
+          });
+          // Cargamos los datos en paralelo
+          await fetchUserData(session.user.id);
+        } else {
+          setUser(null);
+          setSavedItems([]);
+          setChildren([]);
+          setEvaluations([]);
+          setCurrentAssessment(null);
+          setCurrentPlanning(null);
+          setGlobalPlanningResult(null);
+          setFocusedAssessment(null);
+          setView('login');
+        }
+      } catch (err) {
+        console.error("Auth state change error:", err);
+      } finally {
+        setIsInitializing(false);
+        setIsAuthLoading(false); // Safety reset for spinner on any auth change
+      }
+    });
+
+    // Safety timeout: never stay stuck more than 5 seconds
+    const safetyTimeout = setTimeout(() => setIsInitializing(false), 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
+  }, [fetchUserData]);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setIsAuthLoading(true);
+
+    try {
+      if (authMode === 'signin') {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: loginForm.email!,
+          password: loginForm.password!
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email: loginForm.email!,
+          password: loginForm.password!,
+          options: {
+            data: {
+              first_name: loginForm.firstName,
+              last_name: loginForm.lastName,
+              location: loginForm.location,
+              phone: loginForm.phone
+            }
+          }
+        });
+        if (error) throw error;
+        alert("¡Registro exitoso! Verifica tu correo.");
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setIsAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(loginForm.email!, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      alert("Se ha enviado un enlace a tu correo.");
+      setAuthMode('signin');
+    } catch (err: any) {
+      setErrorMessage(err.message);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (password: string) => {
+    setErrorMessage(null);
+    setIsAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    } catch (err: any) {
+      setErrorMessage(err.message);
+      throw err;
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setErrorMessage(null);
+    setIsAuthLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+
+      // Si la librería no redirige automáticamente por alguna razón de entorno, forzamos la navegación
+      if (data?.url) {
+        window.location.assign(data.url);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message);
+      setIsAuthLoading(false);
+    }
+    // No usamos finally para que el spinner persista durante el proceso de redirección
+  };
+
+  const handleLogout = useCallback(async () => {
+    setIsAuthLoading(true);
+    try {
+      // 1. Limpieza inmediata del estado (UI Reactiva)
+      setUser(null);
+      setSavedItems([]);
+      setChildren([]);
+      setEvaluations([]);
+      resetForm();
+      setView('login');
+
+      // 2. Cierre de sesión en Supabase (con timeout de seguridad)
+      const logoutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Logout timeout')), 2000)
+      );
+
+      await Promise.race([logoutPromise, timeoutPromise]);
+    } catch (err) {
+      console.error("Resilient Logout:", err);
+      // Forzamos el estado de sesión a null localmente si falla o hay timeout
+      setSession(null);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  }, []);
+
+  const savePlanning = async () => {
+    const planToSave = globalPlanningResult || currentPlanning;
+    if (!planToSave || !session) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from('saved_plans').insert({
+        user_id: session.user.id,
+        title: planToSave.ambitoNucleo,
+        content: planToSave,
+        plan_type: globalPlanningResult ? 'planning_global' : 'planning_variable'
+      });
+      if (error) throw error;
+
+      alert("¡Guardado en el Baúl! ✨");
+      await fetchSavedItems();
+      setView('history');
+      resetForm();
+    } catch (err: any) {
+      setErrorMessage("Error al guardar.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const deleteItem = async (e: React.MouseEvent, db_id: string) => {
+    e.stopPropagation();
+    if (window.confirm("¿Borrar permanentemente?")) {
+      setIsDeleting(db_id);
+      try {
+        const { error } = await supabase.from('saved_plans').delete().eq('id', db_id);
+        if (error) throw error;
+        await fetchSavedItems();
+      } catch (err: any) {
+        setErrorMessage("Error al eliminar.");
+      } finally {
+        setIsDeleting(null);
+      }
+    }
+  };
+
+  const handleGenerate = async () => {
+    setErrorMessage(null);
+
+    // Diagnóstico
+    if (!selectedLevel || !selectedNucleo || selectedObjectives.length === 0 || !selectedMethodology) {
+      const missing = [];
+      if (!selectedLevel) missing.push("Nivel");
+      if (!selectedNucleo) missing.push("Núcleo");
+      if (selectedObjectives.length === 0) missing.push("Objetivo(s)");
+      if (!selectedMethodology) missing.push("Metodología");
+
+      const msg = `Faltan seleccionar: ${missing.join(", ")}`;
+      console.warn(msg);
+      setErrorMessage(msg);
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      console.log("Iniciando generación con:", {
+        level: selectedLevel,
+        nucleo: selectedNucleo.name,
+        objectives: selectedObjectives.map(o => o.text).join(" | "),
+        methodology: selectedMethodology
+      });
+
+      const data = await generateAssessmentDetails(selectedLevel, selectedNucleo.name, selectedObjectives.map(o => o.text).join(" | "), selectedMethodology);
+
+      if (!data) throw new Error("La IA no devolvió datos válidos.");
+
+      setCurrentAssessment({
+        ...data,
+        level: selectedLevel,
+        nucleo: selectedNucleo.name,
+        objective: selectedObjectives.map(o => o.text).join(" | "),
+        methodology: selectedMethodology,
+        createdAt: new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-CL')
+      });
+    } catch (err: any) {
+      console.error("Error en handleGenerate:", err);
+      // Mejoramos el mensaje para errores common de Edge Functions
+      if (err.message?.includes('Failed to send a request')) {
+        setErrorMessage("¡Error de conexión! No se pudo contactar con la función de IA. ¿Has desplegado la Edge Function en Supabase?");
+      } else {
+        setErrorMessage(err.message || "Error al generar la aventura.");
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDiagnose = async () => {
+    setIsDiagnosing(true);
+    setErrorMessage(null);
+    try {
+      const result = await testSupabaseConnection();
+      if (!result.success) {
+        setErrorMessage(`⚠️ Error de Red: ${result.message}`);
+      } else {
+        // Probamos la Edge Function específicamente con el nuevo modo diagnóstico
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-content', { body: { prompt: 'ping' } });
+          if (error) {
+            console.error("DEBUG - Full FunctionsError:", error);
+            let displayMsg = error.message || "Error desconocido";
+
+            try {
+              if (error.status) displayMsg = `[Status ${error.status}] ${displayMsg}`;
+
+              if (error.context && typeof error.context.text === 'function') {
+                const rawText = await error.context.text();
+                console.log("DEBUG - Raw Error Text:", rawText);
+                if (rawText) displayMsg += ` - Cuerpo: ${rawText.substring(0, 80)}`;
+              } else if (error.context && typeof error.context.json === 'function') {
+                const body = await error.context.json();
+                if (body.error) displayMsg += ` - Detalle: ${body.error}`;
+              }
+            } catch (inner) {
+              console.error("Failed to extract further details:", inner);
+            }
+
+            setErrorMessage(`⚠️ Error en Función: ${displayMsg}. Revisa los logs con 'npx supabase functions logs generate-content'`);
+          } else if (data && data.status === "ok") {
+            if (data.hasApiKey) {
+              setErrorMessage(`✅ Conexión perfecta: Supabase activa y detecta API Key (Empieza por: ${data.apiKeyPrefix}).`);
+            } else {
+              setErrorMessage("⚠️ Conexión establecida pero FALTA LA API KEY. Ejecuta: npx supabase secrets set GEMINI_API_KEY=tu_clave");
+            }
+          } else {
+            setErrorMessage("✅ Conexión establecida pero la respuesta no fue la esperada.");
+          }
+        } catch (e: any) {
+          console.error("Diagnostic invoke error:", e);
+          const detail = e.message || "Error desconocido";
+          setErrorMessage(`⚠️ Error crítico: La red base funciona, pero falla el envío a la Edge Function. Detalle: ${detail}`);
+        }
+      }
+    } catch (err: any) {
+      setErrorMessage("Error durante el diagnóstico.");
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
+
+  const handleGeneratePlanning = async (assessment: GeneratedAssessment) => {
+    setIsGeneratingPlanning(true);
+    setFocusedAssessment(assessment);
+    setErrorMessage(null);
+    try {
+      const planningData = await generateVariablePlanning(assessment);
+      if (!planningData) throw new Error("No se pudo obtener el contenido desarrollado de la planificación.");
+
+      setCurrentPlanning({
+        ...planningData,
+        mes: assessment.createdAt,
+        equipo: user ? `${user.firstName} ${user.lastName}` : 'Docente'
+      });
+      setView('planning');
+    } catch (err: any) {
+      console.error("Error en handleGeneratePlanning:", err);
+      if (err.message?.includes('Failed to send a request')) {
+        setErrorMessage("¡Error de red! No se pudo enviar el contenido a la IA. Revisa tu conexión.");
+      } else {
+        setErrorMessage(err.message || "Error al desarrollar la planificación.");
+      }
+    } finally {
+      setIsGeneratingPlanning(false);
+    }
+  };
+
+  const planningItems = useMemo(() => {
+    return savedItems.filter(i => i.plan_type.includes('planning'));
+  }, [savedItems]);
+
+  const handleGenerateGlobalPlanning = async () => {
+    if (planningItems.length === 0) return;
+    setIsGeneratingGlobal(true);
+    try {
+      const data = await generateGlobalPlanning(planningItems);
+      setGlobalPlanningResult({
+        ...data,
+        mes: new Date().toLocaleDateString('es-CL'),
+        equipo: user ? `${user.firstName} ${user.lastName}` : 'Docente'
+      });
+      setView('global-planning');
+    } catch (err: any) {
+      console.error("Global Planning Error:", err);
+      setErrorMessage(err.message || "Error al generar plan integral.");
+    } finally {
+      setIsGeneratingGlobal(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    const element = document.getElementById('professional-planning-export-target');
+    if (!element) return;
+
+    setIsExporting(true);
+    try {
+      const opt = {
+        margin: 0,
+        filename: `Planifica_${new Date().toLocaleDateString('es-CL').replace(/\//g, '-')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          width: element.offsetWidth
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'], before: '.html2pdf__page-break' }
+      };
+      // @ts-ignore
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error("PDF Export Error:", err);
+      setErrorMessage("Error al exportar.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleQuickExport = (item: any) => {
+    const plan = item.content;
+    if (item.plan_type === 'planning_global') {
+      setGlobalPlanningResult(plan);
+      setView('global-planning');
+    } else {
+      setCurrentPlanning(plan);
+      setView('planning');
+    }
+    setTimeout(handleExportPDF, 800);
+  };
+  const resetForm = () => {
+    setSelectedLevel(null); setSelectedNucleo(null); setSelectedObjectives([]);
+    setSelectedDate(new Date().toISOString().split('T')[0]);
+    setSelectedMethodology(null); setExpandedAmbito(null);
+    setCurrentAssessment(null); setCurrentPlanning(null); setGlobalPlanningResult(null);
+  };
+
+  const openSavedPlanning = (item: any) => {
+    const plan = item.content;
+    if (item.plan_type === 'planning_global') {
+      setGlobalPlanningResult(plan);
+      handleViewChange('global-planning');
+    } else {
+      setCurrentPlanning(plan);
+      handleViewChange('planning');
+    }
+  };
+
+  const handleViewChange = (newView: any) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setView(newView);
+      window.scrollTo(0, 0);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
+    }, 250);
+  };
+
+  const groupedData = useMemo(() => {
+    const groups: Record<string, Nucleo[]> = {};
+    CURRICULUM_DATA.forEach(nuc => {
+      if (!groups[nuc.ambito]) groups[nuc.ambito] = [];
+      groups[nuc.ambito].push(nuc);
+    });
+    return groups;
+  }, []);
+
+  const toggleAmbito = (ambito: string) => {
+    setExpandedAmbito(prev => prev === ambito ? null : ambito);
+  };
+
+  const openMaterialSearch = (material: string) => {
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(material)}+educacion+parvularia`, '_blank');
+  };
+
+  const activePlanning = globalPlanningResult || currentPlanning;
+
+  if (isInitializing) {
+    return (
+      <div className="max-w-md mx-auto min-h-screen bg-[#fffdf5] flex flex-col items-center justify-center p-8 text-center">
+        <Loader2 className="w-12 h-12 text-sky-500 animate-spin mb-4" />
+        <p className="text-slate-500 font-bold animate-pulse">Iniciando Planifica...</p>
+      </div>
+    );
+  }
+
+  if (view === 'login') {
+    return (
+      <LoginView
+        authMode={authMode}
+        setAuthMode={setAuthMode}
+        loginForm={loginForm}
+        setLoginForm={setLoginForm}
+        showPassword={showPassword}
+        setShowPassword={setShowPassword}
+        isAuthLoading={isAuthLoading}
+        handleLoginSubmit={handleLoginSubmit}
+        handleGoogleLogin={handleGoogleLogin}
+        handleResetSubmit={handleResetSubmit}
+        errorMessage={errorMessage}
+      />
+    );
+  }
+
+  if (view === 'password-reset') {
+    return (
+      <PasswordResetView
+        handleUpdatePassword={handleUpdatePassword}
+        isAuthLoading={isAuthLoading}
+        errorMessage={errorMessage}
+      />
+    );
+  }
+
+  return (
+    <Layout user={user} view={view} setView={handleViewChange} handleLogout={handleLogout} errorMessage={errorMessage} setErrorMessage={setErrorMessage}>
+      <div className={`transition-all duration-300 ${isTransitioning ? 'blur-load opacity-40 scale-[0.98]' : 'opacity-100 scale-100'}`}>
+        {view === 'home' && (
+          <HomeView
+            user={user}
+            planningItemsCount={planningItems.length}
+            setView={handleViewChange}
+            resetForm={resetForm}
+          />
+        )}
+
+        {view === 'history' && (
+          <HistoryView
+            planningItems={planningItems}
+            isGeneratingGlobal={isGeneratingGlobal}
+            isDeleting={isDeleting}
+            setView={handleViewChange}
+            handleGenerateGlobalPlanning={handleGenerateGlobalPlanning}
+            handleQuickExport={handleQuickExport}
+            deleteItem={deleteItem}
+            openSavedPlanning={openSavedPlanning}
+          />
+        )}
+
+        {(view === 'planning' || view === 'global-planning') && (
+          <PlanningView
+            activePlanning={activePlanning}
+            setView={handleViewChange}
+            savePlanning={savePlanning}
+            handleExportPDF={handleExportPDF}
+            isSaving={isSaving}
+            isExporting={isExporting}
+          />
+        )}
+
+        {view === 'create' && (
+          <CreateView
+            currentAssessment={currentAssessment}
+            setCurrentAssessment={setCurrentAssessment}
+            selectedLevel={selectedLevel}
+            setSelectedLevel={setSelectedLevel}
+            selectedNucleo={selectedNucleo}
+            setSelectedNucleo={setSelectedNucleo}
+            selectedObjectives={selectedObjectives}
+            setSelectedObjectives={setSelectedObjectives}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            selectedMethodology={selectedMethodology}
+            setSelectedMethodology={setSelectedMethodology}
+            expandedAmbito={expandedAmbito}
+            toggleAmbito={toggleAmbito}
+            groupedData={groupedData}
+            isGenerating={isGenerating}
+            handleGenerate={handleGenerate}
+            handleGeneratePlanning={handleGeneratePlanning}
+            isGeneratingPlanning={isGeneratingPlanning}
+            setView={handleViewChange}
+            openMaterialSearch={openMaterialSearch}
+            children={children}
+          />
+        )}
+
+        {view === 'evaluations' && (
+          <EvaluationsView
+            setView={handleViewChange}
+            children={children}
+            session={session}
+            evaluations={evaluations}
+            onFetchEvaluations={fetchEvaluations}
+            groupedData={groupedData}
+            expandedAmbito={expandedAmbito}
+            toggleAmbito={toggleAmbito}
+          />
+        )}
+
+        {view === 'children-list' && (
+          <ChildrenListView setView={handleViewChange} children={children} setChildren={setChildren} session={session} />
+        )}
+
+        {view === 'profile' && (
+          <ProfileView
+            user={user}
+            session={session}
+            setView={handleViewChange}
+            onUpdateUser={(updated) => setUser(updated)}
+            isDiagnosing={isDiagnosing}
+            handleDiagnose={handleDiagnose}
+          />
+        )}
+      </div>
+
+      {/* DOCUMENTO TÉCNICO OCULTO PARA EXPORTACIÓN PDF */}
+      <div style={{ position: 'fixed', left: '-10000px', top: '0', width: '210mm', minHeight: '297mm', background: 'white' }} className="no-print">
+        {activePlanning && (
+          <div id="professional-planning-export-target" className="bg-white p-10">
+            {/* Header Rediseñado */}
+            <div className="flex items-start justify-between w-full mb-2">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-sky-500 to-sky-600 rounded-[1.5rem] flex items-center justify-center shadow-lg">
+                  <Star className="text-white w-12 h-12 fill-white" />
+                </div>
+                <div>
+                  <h1 className="text-5xl font-black text-slate-800 tracking-tighter italic">Planifica</h1>
+                  {activePlanning.titulo && (
+                    <p className="text-lg font-black text-sky-600 italic mt-2">{activePlanning.titulo}</p>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">EMITIDO EL</p>
+                <div className="bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100 font-bold text-sm text-slate-700">
+                  {activePlanning.mes || new Date().toLocaleDateString('es-CL')}
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-[11px] font-black text-sky-500 uppercase tracking-[0.4em] pl-2">
+                REGISTRO DE AVENTURA PEDAGÓGICA
+              </p>
+            </div>
+
+            {/* Blue Divider Bar */}
+            <div className="h-2.5 bg-sky-400 w-full rounded-full mb-10 shadow-sm shadow-sky-100"></div>
+
+            {/* 2x2 Info Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-12">
+              {/* Nivel Card */}
+              <div className="bg-sky-50/40 p-6 rounded-[2.5rem] border-2 border-sky-100 flex gap-4 items-center">
+                <div className="p-3 bg-white rounded-2xl shadow-sm border border-sky-50">
+                  <Target className="w-6 h-6 text-sky-500" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-sky-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    EL NIVEL
+                  </div>
+                  <div className="text-sm font-black text-slate-800 leading-tight">{activePlanning.nivel}</div>
+                </div>
+              </div>
+
+              {/* Fecha Card */}
+              <div className="bg-amber-50/40 p-6 rounded-[2.5rem] border-2 border-amber-100 flex gap-4 items-center">
+                <div className="p-3 bg-white rounded-2xl shadow-sm border border-amber-50">
+                  <Calendar className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    DÍA DEL ENCUENTRO
+                  </div>
+                  <div className="text-sm font-black text-slate-800 leading-tight">{activePlanning.mes || new Date().toLocaleDateString('es-CL')}</div>
+                </div>
+              </div>
+
+              {/* Guía Card (With Avatar) */}
+              <div className="bg-emerald-50/40 p-4 rounded-[2.5rem] border-2 border-emerald-100 flex gap-4 items-center">
+                <div className="shrink-0">
+                  {user?.avatarUrl ? (
+                    <div className="w-14 h-14 rounded-2xl border-2 border-emerald-200 overflow-hidden shadow-sm bg-white">
+                      <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-white rounded-2xl shadow-sm border border-emerald-50">
+                      <UserIcon className="w-6 h-6 text-emerald-500" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
+                    GUÍA DE AVENTURA
+                  </div>
+                  <div className="text-sm font-black text-slate-800 leading-tight">{activePlanning.equipo || 'Docente'}</div>
+                </div>
+              </div>
+
+              {/* Ámbito Card */}
+              <div className="bg-rose-50/40 p-6 rounded-[2.5rem] border-2 border-rose-100 flex gap-4 items-center">
+                <div className="p-3 bg-white rounded-2xl shadow-sm border border-rose-50">
+                  <Star className="w-6 h-6 text-rose-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">
+                    METODOLOGÍA
+                  </div>
+                  <div className="text-sm font-black text-slate-800 leading-tight truncate">
+                    {activePlanning.metodologia || 'Estándar'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {activePlanning.materiales && activePlanning.materiales.length > 0 && (
+              <div className="mb-10 p-8 bg-slate-50 border-2 border-slate-100 rounded-[2.5rem] space-y-4">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
+                  CAJA DE MATERIALES
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {activePlanning.materiales.map((m, i) => (
+                    <span key={i} className="px-4 py-1.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 shadow-sm">
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {activePlanning.planes.map((plan, idx) => (
+                <div
+                  key={idx}
+                  className={`p-8 bg-white border border-slate-200 rounded-[2rem] shadow-sm ${idx > 0 ? 'html2pdf__page-break' : ''}`}
+                >
+                  <div className="flex gap-5 mb-6">
+                    <div className="bg-yellow-400 w-2 rounded-full shrink-0"></div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-amber-600 font-bold text-[10px] uppercase tracking-[0.25em]">Objetivo OA</div>
+                      <p className="text-slate-900 text-sm font-bold">{plan.objective}</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-6">
+                    <div className="space-y-2">
+                      <h5 className="text-[10px] font-bold text-sky-600 uppercase">Inicio</h5>
+                      <div className="text-xs text-slate-700 bg-sky-50/20 p-5 rounded-2xl">{plan.inicio}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <h5 className="text-[10px] font-bold text-emerald-600 uppercase">Desarrollo</h5>
+                      <div className="text-xs text-slate-700 bg-emerald-50/20 p-5 rounded-2xl">{plan.desarrollo}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <h5 className="text-[10px] font-bold text-rose-600 uppercase">Cierre</h5>
+                      <div className="text-xs text-slate-700 bg-rose-50/20 p-5 rounded-2xl">{plan.cierre}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-12 p-10 bg-slate-50 border-4 border-dashed border-slate-100 rounded-[3rem] text-sm text-slate-500 font-bold italic">
+              {activePlanning.mediacion}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* View Transition Overlay */}
+      <div className={`view-transition-overlay ${isTransitioning ? 'active' : ''}`} />
+    </Layout>
+  );
+};
+
+export default App;

@@ -1,0 +1,180 @@
+:root {
+  --color-primary: #6366f1;
+  --color-secondary: #ec4899;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-info: #0ea5e9;
+  --color-background: #fffdf5;
+  --color-card: #ffffff;
+  --color-text-main: #1e293b;
+  --color-text-muted: #64748b;
+  
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+  --radius-2xl: 2.5rem;
+  --radius-3xl: 3rem;
+  
+  --max-width-content: 100%;
+}
+
+/* Breakpoints definitions */
+/* Móvil: 0–639px (Default) */
+
+/* Móvil-Alto: 640–899px */
+@media (min-width: 640px) {
+  :root {
+    --max-width-content: 640px;
+  }
+}
+
+/* Tablet / Portátil: 900–1199px */
+@media (min-width: 900px) {
+  :root {
+    --max-width-content: 900px;
+  }
+}
+
+/* Escritorio: 1200px en adelante */
+@media (min-width: 1200px) {
+  :root {
+    --max-width-content: 1200px;
+  }
+}
+
+body {
+  font-family: 'Quicksand', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-main);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.responsive-container {
+  width: 100%;
+  max-width: var(--max-width-content);
+  margin: 0 auto;
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+}
+
+@media (min-width: 900px) {
+  .responsive-container {
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+  }
+}
+
+.card-vibe {
+  background-color: var(--color-card);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  border: 4px solid #f8fafc;
+  transition: transform 0.2s ease;
+}
+
+.card-vibe:active {
+  transform: scale(0.98);
+}
+
+/* Transitions */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* PDF Export overrides */
+@media print {
+  .no-print { display: none !important; }
+  body { background-color: white !important; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #fde047;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #facc15;
+}
+
+
+/* UI Animations & Transitions */
+.animate-in {
+  animation-duration: 0.4s;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+.zoom-in-95 {
+  animation-name: zoomIn95;
+}
+
+.slide-in-from-bottom-4 {
+  animation-name: slideInFromBottom;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn95 {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInFromBottom {
+  from { transform: translateY(1rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Transition Overlay */
+.view-transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-background);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.view-transition-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.blur-load {
+  filter: blur(8px);
+  transition: filter 0.3s ease;
+}

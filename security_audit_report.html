@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Auditoría de Seguridad - Planifica</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; mx-auto; padding: 20px; background-color: #f9fafb; }
+        .container { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin: 0 auto; }
+        h1 { border-bottom: 2px solid #eaeaea; padding-bottom: 10px; color: #111; }
+        h2 { margin-top: 30px; color: #444; }
+        .summary-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .summary-table th, .summary-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eaeaea; }
+        .status-ok { color: #10b981; font-weight: bold; }
+        .status-warning { color: #f59e0b; font-weight: bold; }
+        .status-critical { color: #ef4444; font-weight: bold; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+        .badge-ok { background: #d1fae5; color: #065f46; }
+        .badge-mid { background: #fef3c7; color: #92400e; }
+        .badge-crit { background: #fee2e2; color: #991b1b; }
+        .details-box { background: #f8fafc; padding: 15px; border-left: 4px solid #3b82f6; margin-bottom: 20px; border-radius: 0 4px 4px 0; }
+        .rec-box { background: #fffbe6; padding: 15px; border-left: 4px solid #fbbf24; margin-bottom: 20px; border-radius: 0 4px 4px 0; }
+        footer { margin-top: 50px; text-align: center; color: #888; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Reporte de Auditoría de Seguridad</h1>
+        <p><strong>Proyecto:</strong> Planifica</p>
+        <p><strong>Fecha:</strong> 2026-02-12</p>
+        <p><strong>Auditor:</strong> Antigravity AI Security Workflow</p>
+
+        <h2>📊 Resumen Ejecutivo</h2>
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Credenciales y Secretos</td>
+                    <td><span class="badge badge-ok">🟢 OK</span></td>
+                </tr>
+                <tr>
+                    <td>Base de Datos (Supabase)</td>
+                    <td><span class="badge badge-ok">🟢 OK</span></td>
+                </tr>
+                <tr>
+                    <td>Arquitectura</td>
+                    <td><span class="badge badge-ok">🟢 OK</span></td>
+                </tr>
+                <tr>
+                    <td>Autenticación</td>
+                    <td><span class="badge badge-ok">🟢 OK</span></td>
+                </tr>
+                <tr>
+                    <td>APIs / Edge Functions</td>
+                    <td><span class="badge badge-mid">🟠 MEDIO</span></td>
+                </tr>
+                <tr>
+                    <td>Dependencias</td>
+                    <td><span class="badge badge-ok">🟢 OK</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="background: #ecfdf5; padding: 15px; border-radius: 6px; border: 1px solid #10b981; color: #064e3b; margin-top: 20px;">
+            <strong>RIESGO TOTAL: BAJO / MEDIO</strong><br>
+            La aplicación es segura para despliegue, con observaciones menores en la configuración de Edge Functions.
+        </div>
+
+        <h2>🧩 Detalles Técnicos</h2>
+
+        <h3>1. Credenciales y Secretos</h3>
+        <div class="details-box">
+            <ul>
+                <li>No se detectaron claves hardcodeadas.</li>
+                <li>Uso correcto de <code>Deno.env.get</code> en backend.</li>
+                <li>Uso correcto de variables públicas en frontend.</li>
+            </ul>
+        </div>
+
+        <h3>2. Base de Datos</h3>
+        <div class="details-box">
+            <ul>
+                <li><strong>RLS Activado:</strong> Tablas <code>saved_plans</code> y <code>profiles</code> protegidas.</li>
+                <li><strong>Políticas:</strong> Los usuarios solo acceden a sus propios registros (<code>auth.uid() = user_id</code>).</li>
+            </ul>
+        </div>
+
+        <h3>3. APIs y Edge Functions (Atención Requerida)</h3>
+        <div class="rec-box">
+            <p><strong>Hallazgo:</strong> La función <code>generate-content</code> no valida explícitamente el usuario en el código. Depende de la configuración "Enforce JWT" del dashboard de Supabase.</p>
+            <p><strong>Recomendación:</strong> Verificar que la opción "Enforce Verification of JWT" esté activada en la consola de Supabase y considerar implementar Rate Limiting.</p>
+        </div>
+
+        <footer>
+            Generado automáticamente por Antigravity Workflow
+        </footer>
+    </div>
+</body>
+</html>
