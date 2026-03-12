@@ -380,11 +380,14 @@ const App: React.FC = () => {
     setErrorMessage(null);
 
     // Diagnóstico
-    if (!selectedLevel || !selectedNucleo || selectedObjectives.length === 0 || !selectedMethodology) {
+    const needsCurriculum = selectedSpan === PlanningSpan.DAILY;
+    if (!selectedLevel || (needsCurriculum && (!selectedNucleo || selectedObjectives.length === 0)) || !selectedMethodology) {
       const missing = [];
       if (!selectedLevel) missing.push("Nivel");
-      if (!selectedNucleo) missing.push("Núcleo");
-      if (selectedObjectives.length === 0) missing.push("Objetivo(s)");
+      if (needsCurriculum) {
+        if (!selectedNucleo) missing.push("Núcleo");
+        if (selectedObjectives.length === 0) missing.push("Objetivo(s)");
+      }
       if (!selectedMethodology) missing.push("Metodología");
 
       const msg = `Faltan seleccionar: ${missing.join(", ")}`;
@@ -402,15 +405,21 @@ const App: React.FC = () => {
         methodology: selectedMethodology
       });
 
-      const data = await generateAssessmentDetails(selectedLevel, selectedNucleo.name, selectedObjectives.map(o => o.text).join(" | "), selectedMethodology, selectedSpan);
+      const data = await generateAssessmentDetails(
+        selectedLevel, 
+        selectedNucleo?.name || "Aleatorio", 
+        selectedObjectives.map(o => o.text).join(" | ") || "Aleatorio (según BCEP)", 
+        selectedMethodology, 
+        selectedSpan
+      );
 
       if (!data) throw new Error("La IA no devolvió datos válidos.");
 
       setCurrentAssessment({
         ...data,
         level: selectedLevel,
-        nucleo: selectedNucleo.name,
-        objective: selectedObjectives.map(o => o.text).join(" | "),
+        nucleo: selectedNucleo?.name || "Varios (Autónomo)",
+        objective: selectedObjectives.map(o => o.text).join(" | ") || "Varios (Autónomo)",
         methodology: selectedMethodology,
         span: selectedSpan,
         createdAt: new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-CL')

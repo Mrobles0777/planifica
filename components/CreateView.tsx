@@ -240,11 +240,11 @@ const CreateView: React.FC<CreateViewProps> = ({
 
             {/* PASOS COMUNES (Dinámicos según el flujo) */}
             
-            {/* Step: Núcleo (Paso 2 en Diario, Paso 3 en Extendido) */}
-            {selectedLevel && (
+            {/* Step: Núcleo (Solo en flujo Diario) */}
+            {selectedSpan === PlanningSpan.DAILY && selectedLevel && (
                 <div className="space-y-4 animate-in slide-in-from-top-4">
                     <label className="text-[11px] font-black text-rose-500 uppercase block ml-4 tracking-widest">
-                        {selectedSpan === PlanningSpan.DAILY ? '2. Ámbito y Núcleo' : '3. Ámbito y Núcleo'}
+                        2. Ámbito y Núcleo
                     </label>
                     <div className="space-y-3">
                         {Object.keys(groupedData).map((ambito) => (
@@ -275,10 +275,10 @@ const CreateView: React.FC<CreateViewProps> = ({
                 </div>
             )}
 
-            {/* Step 3: Objective */}
-            {selectedNucleo && selectedLevel && (
+            {/* Step 3: Objetivos (Solo en flujo Diario) */}
+            {selectedSpan === PlanningSpan.DAILY && selectedNucleo && selectedLevel && (
                 <div className="space-y-4 animate-in fade-in">
-                    <label className="text-[11px] font-black text-emerald-500 uppercase block ml-4 tracking-widest">3. Objetivo de Aprendizaje</label>
+                    <label className="text-[11px] font-black text-emerald-500 uppercase block ml-4 tracking-widest">3. Elige los Objetivos</label>
                     <div className="grid gap-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                         {selectedNucleo.objectives[selectedLevel].map((obj) => (
                             <button
@@ -336,17 +336,40 @@ const CreateView: React.FC<CreateViewProps> = ({
                 </div>
             )}
 
-            {selectedMethodology && (
-                <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating}
-                    className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-black py-8 rounded-[3rem] shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 text-xl transition-all active:scale-95 hover:shadow-sky-200/50 mt-10"
-                >
-                    {isGenerating ? <Loader2 className="animate-spin w-8 h-8" /> : <Sparkles className="w-8 h-8" />}
-                    {selectedSpan === PlanningSpan.WEEKLY ? '¡Generar Plan Semanal!' : 
-                     selectedSpan === PlanningSpan.MONTHLY ? '¡Generar Plan Mensual!' : 
-                     '¡Crear Aventura Diaria!'}
-                </button>
+            {((selectedSpan === PlanningSpan.DAILY && selectedMethodology) || 
+               (selectedSpan !== PlanningSpan.DAILY && selectedLevel)) && (
+                <div className="space-y-6 animate-in slide-in-from-bottom-4">
+                    {/* Method Selector for Extended Plans if level chosen, or already chosen for Daily */}
+                    {selectedSpan !== PlanningSpan.DAILY && !selectedMethodology && (
+                        <div className="space-y-4">
+                            <label className="text-[11px] font-black text-emerald-500 uppercase block ml-4 tracking-widest">3. Enfoque Metodológico</label>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                {Object.values(Methodology).map((meth) => (
+                                    <button
+                                        key={meth}
+                                        onClick={() => setSelectedMethodology(meth)}
+                                        className={`p-6 rounded-[2rem] border-2 transition-all text-left ${selectedMethodology === meth ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-md' : 'border-slate-100 bg-white hover:border-emerald-100'}`}
+                                    >
+                                        <span className="text-sm font-black">{meth}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedMethodology && (
+                        <button
+                            onClick={handleGenerate}
+                            disabled={isGenerating}
+                            className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-black py-8 rounded-[3rem] shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 text-xl transition-all active:scale-95 hover:shadow-sky-200/50 mt-10"
+                        >
+                            {isGenerating ? <Loader2 className="animate-spin w-8 h-8" /> : <Sparkles className="w-8 h-8" />}
+                            {selectedSpan === PlanningSpan.WEEKLY ? '¡Generar Plan Semanal!' : 
+                             selectedSpan === PlanningSpan.MONTHLY ? '¡Generar Plan Mensual!' : 
+                             '¡Crear Aventura Diaria!'}
+                        </button>
+                    )}
+                </div>
             )}
         </div>
     );

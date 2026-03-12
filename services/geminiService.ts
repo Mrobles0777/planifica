@@ -120,10 +120,15 @@ export async function generateAssessmentDetails(
     Actúa como un experto en Educación Parvularia en Chile.
     Genera una propuesta de evaluación técnica para:
     Nivel: ${level}
+    Nivel: ${level}
     Núcleo: ${nucleo}
     Objetivo de Aprendizaje (OA): ${objective}
     Enfoque: ${methodology}
     Alcance: ${span}
+    
+    IMPORTANTE PARA PLANES EXTENDIDOS (${span}):
+    - Si el Núcleo u Objetivo es "Aleatorio", tú como experto DEBES seleccionar los Núcleos y OAs más pertinentes de las BCEP para el nivel ${level}.
+    - Asegura una progresión pedagógica lógica para el período solicitado.
     
     INSTRUCCIONES DE ALCANCE:
     - Si es ${PlanningSpan.DAILY}: Una experiencia única potente.
@@ -215,6 +220,9 @@ export async function generateVariablePlanning(assessment: GeneratedAssessment):
     - Objetivo: ${assessment.objective}
     - Actividad/Tema Base: ${assessment.activityName}
     - Metodología: ${assessment.methodology}
+
+    INSTRUCCIÓN DE AUTONOMÍA:
+    - Si el Núcleo u Objetivo indica "Varios" o "Autónomo", DEBES proponer e integrar en la planificación los OAs específicos de las BCEP que mejor se adapten a la experiencia y al nivel ${assessment.level}.
 
     IMPORTANTE: 
     - Genera en el array "planes" una entrada por cada día o semana según corresponda.
